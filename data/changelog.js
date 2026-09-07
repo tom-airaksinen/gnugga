@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v9", items: [
+    { t: "Inställningsknappen är ett tydligare kugghjul (såg ut som en sol)", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v8", items: [
     { t: "Konfetti på klar-skärmen, samma fysik som i Flippa: bitarna faller, studsar mot kanterna och lägger sig på Klart-knappen. Mer konfetti när passet gick bra", type: "new", hi: true, ico: "🎉",
       desc: "Ett litet firande gör att man vill komma tillbaka. Följer telefonens inställning för minskad rörelse – då visas ingen konfetti." },
