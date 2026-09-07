@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v4";
+const APP_VERSION = "v5";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -319,6 +319,8 @@ function renderBoj(p, ex) {
     const accepted = [ex.answer, ...(ex.alts || []), ...(ex.acceptFull && ex.full ? [ex.full] : [])].map(norm);
     const ok = accepted.includes(v);
     inp.classList.remove("ok", "bad"); inp.classList.add(ok ? "ok" : "bad");
+    inp.blur();
+    $("#check").classList.add("hidden"); $(".keys").classList.add("hidden");
     grade(ok, { final: ok || S.cur.attempts >= 1 });
   };
   $("#check").addEventListener("click", check);
@@ -378,7 +380,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     showFb("good", `<div class="h">✓ ${praise}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${extra}<div class="acts"><button class="cta good" id="fb-next">Fortsätt</button></div>`);
   } else if (!final) {
     showFb("hint", `<div class="h">Inte riktigt – en ledtråd</div><div class="why">${c.ex.hint}</div><div class="acts"><button class="cta hint" id="fb-retry">Försök igen</button><button class="cta ghost" id="fb-giveup">Visa svaret</button></div>`);
-    $("#fb-retry").addEventListener("click", () => { hideFb(); const inp = $("#inp"); if (inp) { inp.classList.remove("bad"); inp.select(); inp.focus(); } });
+    $("#fb-retry").addEventListener("click", () => { hideFb(); const inp = $("#inp"); if (inp) { inp.classList.remove("bad"); $("#check").classList.remove("hidden"); $(".keys").classList.remove("hidden"); inp.select(); inp.focus(); } });
     $("#fb-giveup").addEventListener("click", () => grade(false, { final: true }));
     return;
   } else {

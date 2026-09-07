@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v5", items: [
+    { t: "Kolla-knappen och specialtecknen försvinner när svaret är avgjort, så att bara Fortsätt är kvar. Vid \"Försök igen\" kommer de tillbaka", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v4", items: [
     { t: "Större och tydligare knappar för tillbaka, inställningar och stäng", type: "improved" },
     { t: "Fixat: sidan bakom Inställningar kunde scrolla när man drog i rutan", type: "fixed" },
