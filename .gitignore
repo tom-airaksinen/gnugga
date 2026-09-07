@@ -1,0 +1,4 @@
+.DS_Store
+scripts/raw/kaikki-ro.jsonl
+scripts/raw/ro_50k.txt
+scripts/raw/gloss-todo.txt

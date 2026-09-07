@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Gnugga</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1b1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gnugga" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Splash vid kallstart -->
+  <div id="splash">
+    <img src="icon-192.png" class="splash-logo" alt="" />
+    <div class="splash-name">Gnugga</div>
+    <div class="splash-note" id="splash-note" aria-live="polite"></div>
+  </div>
+
+  <div id="app">
+
+    <!-- ===== HEM ===== -->
+    <section id="s-home" class="screen on">
+      <header class="hdr">
+        <h1><img src="icon-192.png" class="app-logo" alt="" /> Gnugga</h1>
+        <button class="chip" id="lang-chip" title="Språk"></button>
+        <button class="ib" id="settings-btn" title="Inställningar" aria-label="Inställningar">⚙︎</button>
+      </header>
+      <div class="pad">
+        <div class="today" id="today"></div>
+        <div id="week" class="week"></div>
+        <div class="eyebrow" style="margin-top:6px">Mönster</div>
+        <div id="pattern-groups" class="groups"></div>
+        <div class="ver"><button class="linkish" id="version-tag"></button></div>
+      </div>
+    </section>
+
+    <!-- ===== MÖNSTER ===== -->
+    <section id="s-pattern" class="screen">
+      <header class="hdr">
+        <button class="back" data-go="s-home" aria-label="Tillbaka">‹</button>
+        <div class="title" id="p-title"></div>
+        <span class="lvl" id="p-lvl"></span>
+      </header>
+      <div class="pad" id="p-body"></div>
+    </section>
+
+    <!-- ===== PASS ===== -->
+    <section id="s-session" class="screen">
+      <div class="top">
+        <button class="back" id="quit" title="Avsluta passet" aria-label="Avsluta passet">✕</button>
+        <div class="prog"><i id="prog-i" style="width:0%"></i></div>
+        <span class="counter" id="counter">0/0</span>
+      </div>
+      <div class="tags" id="tags"></div>
+      <div id="stage" class="stage"></div>
+      <div id="fb" class="fb"></div>
+    </section>
+
+    <!-- ===== KLAR ===== -->
+    <section id="s-done" class="screen">
+      <div class="done" id="done-body"></div>
+    </section>
+  </div>
+
+  <!-- Modaler (inställningar, hjälp, vad är nytt) -->
+  <div id="modal-root" class="modal-root hidden">
+    <div class="modal-back" id="modal-back"></div>
+    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="data/changelog.js"></script>
+  <script src="data/ro/monster.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
