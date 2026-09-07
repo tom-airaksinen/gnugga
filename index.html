@@ -18,6 +18,7 @@
   <div id="splash">
     <img src="icon-192.png" class="splash-logo" alt="" />
     <div class="splash-name">Gnugga</div>
+    <div class="splash-ver" id="splash-ver"></div>
     <div class="splash-note" id="splash-note" aria-live="polite"></div>
   </div>
 
@@ -28,7 +29,7 @@
       <header class="hdr">
         <h1><img src="icon-192.png" class="app-logo" alt="" /> Gnugga</h1>
         <button class="chip" id="lang-chip" title="Språk"></button>
-        <button class="ib" id="settings-btn" title="Inställningar" aria-label="Inställningar">⚙︎</button>
+        <button class="ib" id="settings-btn" title="Inställningar" aria-label="Inställningar"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       </header>
       <div class="pad">
         <div class="today" id="today"></div>
@@ -42,7 +43,7 @@
     <!-- ===== MÖNSTER ===== -->
     <section id="s-pattern" class="screen">
       <header class="hdr">
-        <button class="back" data-go="s-home" aria-label="Tillbaka">‹</button>
+        <button class="ib back" data-go="s-home" aria-label="Tillbaka"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="title" id="p-title"></div>
         <span class="lvl" id="p-lvl"></span>
       </header>
@@ -52,7 +53,7 @@
     <!-- ===== PASS ===== -->
     <section id="s-session" class="screen">
       <div class="top">
-        <button class="back" id="quit" title="Avsluta passet" aria-label="Avsluta passet">✕</button>
+        <button class="ib" id="quit" title="Avsluta passet" aria-label="Avsluta passet"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
         <div class="prog"><i id="prog-i" style="width:0%"></i></div>
         <span class="counter" id="counter">0/0</span>
       </div>

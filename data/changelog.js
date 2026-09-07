@@ -9,6 +9,11 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v4", items: [
+    { t: "Större och tydligare knappar för tillbaka, inställningar och stäng", type: "improved" },
+    { t: "Fixat: sidan bakom Inställningar kunde scrolla när man drog i rutan", type: "fixed" },
+    { t: "Versionsnumret syns nu på startskärmen, i Inställningar och på splashen", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v3", items: [
     { t: "Standardpasset är nu 12 övningar (var 20). Välj 8, 12 eller 20 i Inställningar – valet sparas på telefonen", type: "improved" },
   ]},

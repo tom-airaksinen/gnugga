@@ -9,7 +9,8 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v3";
+const APP_VERSION = "v4";
+const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
 const byId = Object.fromEntries(PATTERNS.map((p) => [p.id, p]));
@@ -167,7 +168,7 @@ function renderHome() {
     ps.map((p) => `<button class="row" data-p="${p.id}"><div class="body"><div class="name">${p.name}</div><div class="bar"><i style="width:${pct(p.id)}%"></i></div></div>${nn && nn.id === p.id ? `<span class="lvl due">Nästa</span>` : lvlHtml(p.id)}<span class="chev">›</span></button>`).join("") + `</div>`).join("");
   $$(".row[data-p]").forEach((b) => b.addEventListener("click", () => openPattern(b.dataset.p)));
   $("#lang-chip").textContent = `${LANG.flag} ${LANG.name}`;
-  $("#version-tag").textContent = `Gnugga ${APP_VERSION} · böjningsdata från Wiktionary (CC BY-SA)`;
+  $("#version-tag").textContent = `Gnugga ${APP_VERSION} · Vad är nytt`;
 }
 /* Nytt mönster introduceras när inget introducerats idag och de aktiva har åtminstone lite på fötterna */
 function canIntroduce() {
@@ -281,7 +282,7 @@ function next() {
   S.cur = { p, ex, type: it.type, attempts: 0, t0: performance.now() };
   const TYPE = { valj: "Välj", boj: "Böj", sag: "Säg det", rattfel: "Rätt eller fel?" };
   $("#tags").innerHTML = `<span class="tag">${p.short}</span><span class="tag type ${it.type === "sag" ? "say" : ""}">${TYPE[it.type]}</span>${it.type === "rattfel" ? `<span class="tag">på tid</span>` : ""}<button class="tag rulebtn" id="rule-peek">Regeln</button>`;
-  $("#rule-peek").addEventListener("click", () => openModal(`<div class="mh"><h2>${p.name}</h2><button class="ib" id="m-close">✕</button></div>${ruleCard(p)}`));
+  $("#rule-peek").addEventListener("click", () => openModal(`<div class="mh"><h2>${p.name}</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>${ruleCard(p)}`));
   ({ valj: renderValj, boj: renderBoj, sag: renderSag, rattfel: renderRattfel })[it.type](p, ex);
 }
 function renderIntro(p) {
@@ -436,17 +437,20 @@ function finish() {
 /* ============================================================
    Modaler: inställningar, hjälp, vad är nytt
    ============================================================ */
+let lockedY = 0;
 function openModal(html) {
   const root = $("#modal-root"); $("#modal").innerHTML = html; root.classList.remove("hidden");
+  // lås bakgrunden: iOS scrollar annars sidan bakom modalen
+  if (!document.body.classList.contains("modal-open")) { lockedY = window.scrollY; document.body.style.top = `-${lockedY}px`; document.body.classList.add("modal-open"); }
   const c = $("#m-close"); if (c) c.addEventListener("click", closeModal);
   bindSpeak($("#modal"));
 }
-function closeModal() { $("#modal-root").classList.add("hidden"); $("#modal").innerHTML = ""; }
+function closeModal() { $("#modal-root").classList.add("hidden"); $("#modal").innerHTML = ""; document.body.classList.remove("modal-open"); document.body.style.top = ""; window.scrollTo(0, lockedY); }
 $("#modal-back").addEventListener("click", closeModal);
 
 function openSettings() {
   const totalItems = Object.keys(P.items).length;
-  openModal(`<div class="mh"><h2>Inställningar</h2><button class="ib" id="m-close">✕</button></div>
+  openModal(`<div class="mh"><h2>Inställningar <span class="muted small" style="font-weight:600">· Gnugga ${APP_VERSION}</span></h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
     <div class="set">
       <div class="set-row"><span class="set-body"><span class="set-t">Övningar per pass</span><span class="set-d">Ungefär 15 sekunder per övning</span></span>
         <div class="seg" id="seg-len">${[8, 12, 20].map((n) => `<button data-n="${n}" class="${SET.passLen === n ? "on" : ""}">${n}</button>`).join("")}</div></div>
@@ -485,7 +489,7 @@ $("#settings-btn").addEventListener("click", openSettings);
 $("#lang-chip").addEventListener("click", () => toast(`${LANG.name} är enda språket än så länge`));
 
 function openHelp() {
-  openModal(`<div class="mh"><h2>Hjälp & grundtankar</h2><button class="ib" id="m-close">✕</button></div>
+  openModal(`<div class="mh"><h2>Hjälp & grundtankar</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
     <div class="help">
       <details open><summary>Vad Gnugga är</summary><div class="more"><p>Ett komplement till Flippa. Flippa nöter <i>ord</i>; Gnugga nöter <i>formerna</i>: bestämd form, plural, verbböjning, adjektiv som ska stämma. ${LANG.intro}</p></div></details>
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
@@ -497,7 +501,7 @@ function openHelp() {
     </div>`);
 }
 function openChangelog() {
-  openModal(`<div class="mh"><h2>Vad är nytt</h2><button class="ib" id="m-close">✕</button></div>
+  openModal(`<div class="mh"><h2>Vad är nytt</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
     ${CHANGELOG.map((d) => `<div class="cl-day"><div class="cl-h"><span>${d.date}</span><span>${d.ver}</span></div>${d.items.map((i) => `<div class="cl-item"><span class="t ${i.type}">${{ new: "Nytt", improved: "Bättre", fixed: "Fixat" }[i.type]}</span><span>${i.t}${i.desc ? `<div class="small muted" style="margin-top:4px">${i.desc}</div>` : ""}</span></div>`).join("")}</div>`).join("")}`);
 }
 $("#version-tag").addEventListener("click", openChangelog);
@@ -537,7 +541,7 @@ async function boot() {
   }
   updateVoice();
   renderHome();
-  const splash = $("#splash");
+  const splash = $("#splash"); $("#splash-ver").textContent = APP_VERSION;
   try { if (sessionStorage.getItem("gnugga-updated")) { $("#splash-note").textContent = `Uppdaterad till ${APP_VERSION}`; sessionStorage.removeItem("gnugga-updated"); } } catch (_) {}
   setTimeout(() => { splash.classList.add("hide"); setTimeout(() => splash.remove(), 450); }, 250);
 }
