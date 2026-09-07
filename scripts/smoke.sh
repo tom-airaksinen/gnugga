@@ -55,6 +55,11 @@ test = '''<script>
     openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards");
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
     openHelp(); out.push("help: " + $$("#modal details").length + " sections"); closeModal();
+    const dx = (i, ex) => (diagnose(i, ex) || "PATTERN-HINT").replace(/<[^>]+>/g, "");
+    const exN = { answer: "mâna", hint: "H", forms: { "mână": "grundformen", "mâna": "bestämd singular", "mâini": "obestämd plural" }, target: "bestämd singular", stemHint: "STEM" };
+    out.push("diag dia: " + dx("mana", exN)); out.push("diag form: " + dx("mâini", exN)); out.push("diag typo: " + dx("mânz", exN)); out.push("diag ending: " + dx("mânăul", exN));
+    const exV = { answer: "mergem", hint: "H", forms: { "merg": "presens för eu", "mergem": "presens för noi" }, target: "presens för noi", stemHint: "STEM" };
+    out.push("diag stem: " + dx("margem", exV)); out.push("diag other: " + dx("merg", exV)); out.push("diag none: " + dx("xyz", exV));
     SET.passLen = 8; save(); SET.passLen = 99; loadProgress(); out.push("settings-persist: passLen=" + SET.passLen + " (förväntat 8)");
     out.push("items=" + Object.keys(P.items).length + " days=" + JSON.stringify(P.days));
   } catch (e) { __errs.push("test: " + (e.stack || e.message)); }

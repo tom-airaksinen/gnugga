@@ -9,6 +9,12 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v10", items: [
+    { t: "Ledtråden efter ett fel svar tittar nu på vad som faktiskt blev fel: bara krumelurerna (ă â î ș ț), ett felskrivet tecken, rätt ändelse men fel stam, eller en riktig form av ordet fast fel form", type: "new", hi: true, ico: "🔍",
+      desc: "Tidigare kom alltid samma tips om ändelsen, även när ändelsen var rätt och det var ett â som saknades. Nu markeras det tecken som skiljer, utan att facit avslöjas." },
+    { t: "Nivån Automatiskt kräver nu också att mönstret övats minst tre olika dagar – en kvälls drill räcker inte, det är spridningen över tid som gör att det sitter", type: "improved" },
+    { t: "Klart-knappen på klar-skärmen ligger längst ner, så det blir luftigare (och konfettin får något att landa på)", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v9", items: [
     { t: "Inställningsknappen är ett tydligare kugghjul (såg ut som en sol)", type: "improved" },
   ]},

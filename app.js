@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v9";
+const APP_VERSION = "v10";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -39,7 +39,7 @@ let SET = { passLen: 12, tts: true, name: "" };
 function loadProgress() {
   try { P = JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { P = null; }
   if (!P || !P.pat) P = { pat: {}, items: {}, days: {}, v: 1 };
-  for (const p of PATTERNS) P.pat[p.id] = P.pat[p.id] || { seen: 0, right: 0, fast: 0, intro: null, last: null };
+  for (const p of PATTERNS) { P.pat[p.id] = P.pat[p.id] || { seen: 0, right: 0, fast: 0, intro: null, last: null }; P.pat[p.id].dayList = P.pat[p.id].dayList || (P.pat[p.id].last ? [P.pat[p.id].last] : []); }
   try { SET = Object.assign(SET, JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}); } catch (_) {}
 }
 function save() {
@@ -52,7 +52,8 @@ function level(id) {
   const s = P.pat[id];
   if (!s.seen) return { n: 0, t: "Nytt" };
   const acc = s.right / s.seen;
-  if (s.seen >= 40 && s.fast >= 15 && acc >= .85) return { n: 3, t: "Automatiskt" };
+  // Automatiskt kräver också spridning över tid: minst tre olika dagar (en kvälls drill räcker inte)
+  if (s.seen >= 40 && s.fast >= 15 && acc >= .85 && (s.dayList || []).length >= 3) return { n: 3, t: "Automatiskt" };
   if (s.seen >= 15 && acc >= .7) return { n: 2, t: "Övat" };
   return { n: 1, t: "Lärt" };
 }
@@ -60,7 +61,8 @@ function pct(id) {
   const s = P.pat[id];
   if (!s.seen) return 0;
   const acc = s.right / s.seen;
-  return Math.min(100, Math.round(20 + Math.min(1, s.seen / 40) * 50 * acc + Math.min(1, s.fast / 15) * 30));
+  const days = Math.min(1, (s.dayList || []).length / 3);
+  return Math.min(100, Math.round(20 + Math.min(1, s.seen / 40) * 40 * acc + Math.min(1, s.fast / 15) * 25 + days * 15));
 }
 const active = () => PATTERNS.filter((p) => P.pat[p.id].seen > 0 || P.pat[p.id].intro);
 const nextNew = () => PATTERNS.find((p) => !P.pat[p.id].intro);
@@ -194,7 +196,7 @@ function openPattern(id) {
   const items = Object.entries(P.items).filter(([k]) => k.startsWith(id + "|")).map(([k, v]) => ({ key: k.split("|")[1], ...v }));
   const weak = items.filter((i) => i.box <= 1).slice(0, 12), strong = items.filter((i) => i.box >= 4).slice(0, 12);
   $("#p-body").innerHTML = ruleCard(p) +
-    (s.seen ? `<div class="card"><h3>Din nivå</h3><div class="small muted">${s.seen} övningar · ${Math.round(100 * s.right / s.seen)} % rätt · ${s.fast} rätt på tid · ${items.length} ord gnuggade</div><div class="bar" style="height:8px"><i style="width:${pct(id)}%"></i></div><div class="small muted">Automatiskt = minst 40 övningar, 85 % rätt och 15 rätt på tid.</div>
+    (s.seen ? `<div class="card"><h3>Din nivå</h3><div class="small muted">${s.seen} övningar · ${Math.round(100 * s.right / s.seen)} % rätt · ${s.fast} rätt på tid · ${(s.dayList || []).length} dagar · ${items.length} ord gnuggade</div><div class="bar" style="height:8px"><i style="width:${pct(id)}%"></i></div><div class="small muted">Automatiskt = minst 40 övningar, 85 % rätt, 15 rätt på tid och övat minst tre olika dagar.</div>
       ${weak.length ? `<div class="small muted" style="margin-top:6px">Svagast just nu</div><div class="wordlist">${weak.map((i) => `<span class="weak">${esc(i.key)}</span>`).join("")}</div>` : ""}
       ${strong.length ? `<div class="small muted" style="margin-top:6px">Sitter bra</div><div class="wordlist">${strong.map((i) => `<span class="strong">${esc(i.key)}</span>`).join("")}</div>` : ""}</div>` : "") +
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
@@ -319,6 +321,7 @@ function renderBoj(p, ex) {
     const accepted = [ex.answer, ...(ex.alts || []), ...(ex.acceptFull && ex.full ? [ex.full] : [])].map(norm);
     const ok = accepted.includes(v);
     inp.classList.remove("ok", "bad"); inp.classList.add(ok ? "ok" : "bad");
+    S.cur.diag = ok ? null : diagnose(v, ex); S.cur.lastInput = v;
     inp.blur();
     $("#check").classList.add("hidden"); $(".keys").classList.add("hidden");
     grade(ok, { final: ok || S.cur.attempts >= 1 });
@@ -360,6 +363,37 @@ function renderRattfel(p, ex) {
   timer = setTimeout(() => answer(null), 4000);
 }
 
+/* ---- Feldiagnos: vad blev egentligen fel? Körs före mönstrets generella ledtråd. ----
+   Ordning: annan riktig form → bara diakriter → felskrivning (1 tecken) → rätt ändelse men
+   fel stam → (annars) ändelseledtråden från mönstret. */
+const stripDia = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+function lev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+function markDiff(input, answer) { // markera tecken i inmatningen som skiljer sig (utan att visa facit)
+  return Array.from(input).map((ch, i) => ch === answer[i] ? esc(ch) : `<mark>${esc(ch)}</mark>`).join("");
+}
+function diagnose(input, ex) {
+  const ans = norm(ex.answer); const inp = norm(input);
+  if (!inp || inp === ans) return null;
+  if (ex.forms && ex.forms[inp] && ex.forms[inp] !== ex.forms[ans]) {
+    return `<b>${esc(inp)}</b> är en riktig form av ordet – men det är <b>${ex.forms[inp]}</b>. Här ska det vara ${ex.target || "en annan form"}.`;
+  }
+  if (stripDia(inp) === stripDia(ans)) {
+    const pos = inp.length === ans.length ? markDiff(inp, ans) : esc(inp);
+    return `Nästan! Bokstäverna är rätt – det är bara krumelurerna. Kolla det markerade: ${pos}. Använd knapparna ă â î ș ț.`;
+  }
+  const tail = Math.min(2, ans.length - 1);
+  const sameEnding = tail > 0 && inp.endsWith(ans.slice(-tail));
+  if (lev(inp, ans) === 1 && !sameEnding) return `Ett tecken ifrån – ser ut som en felskrivning eller fel ändelse. Kolla slutet: ${markDiff(inp, ans)}.`;
+  if (sameEnding && ex.stemHint) return `Ändelsen <b>-${esc(ans.slice(-tail))}</b> stämmer. ${ex.stemHint}`;
+  if (lev(inp, ans) === 1) return `Ett tecken ifrån: ${markDiff(inp, ans)}. ${ex.hint}`;
+  return null; // → mönstrets ledtråd
+}
+
 /* ---- Bedömning + feedback i två steg ---- */
 function grade(ok, { final, silent, timeout } = {}) {
   const c = S.cur; c.attempts++;
@@ -367,7 +401,7 @@ function grade(ok, { final, silent, timeout } = {}) {
   const full = c.ex.full || c.ex.answer;
   if (ok) {
     S.right++; S.total++;
-    const s = P.pat[c.p.id]; s.seen++; s.right++; s.last = today();
+    const s = P.pat[c.p.id]; s.seen++; s.right++; s.last = today(); touchDay(s);
     const fast = c.type === "rattfel" || (c.type === "boj" && ms < 7000 && c.attempts === 1);
     if (fast) s.fast++;
     bumpItem(c.p.id, c.ex.key, true, c.attempts === 1 && fast);
@@ -379,18 +413,18 @@ function grade(ok, { final, silent, timeout } = {}) {
       (c.attempts > 1 || silent) ? "" : `<div class="why muted small">${c.ex.why}</div>`;
     showFb("good", `<div class="h">✓ ${praise}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${extra}<div class="acts"><button class="cta good" id="fb-next">Fortsätt</button></div>`);
   } else if (!final) {
-    showFb("hint", `<div class="h">Inte riktigt – en ledtråd</div><div class="why">${c.ex.hint}</div><div class="acts"><button class="cta hint" id="fb-retry">Försök igen</button><button class="cta ghost" id="fb-giveup">Visa svaret</button></div>`);
+    showFb("hint", `<div class="h">Inte riktigt – en ledtråd</div><div class="why">${c.diag || c.ex.hint}</div><div class="acts"><button class="cta hint" id="fb-retry">Försök igen</button><button class="cta ghost" id="fb-giveup">Visa svaret</button></div>`);
     $("#fb-retry").addEventListener("click", () => { hideFb(); const inp = $("#inp"); if (inp) { inp.classList.remove("bad"); $("#check").classList.remove("hidden"); $(".keys").classList.remove("hidden"); inp.select(); inp.focus(); } });
     $("#fb-giveup").addEventListener("click", () => grade(false, { final: true }));
     return;
   } else {
     S.total++;
-    const s = P.pat[c.p.id]; s.seen++; s.last = today();
+    const s = P.pat[c.p.id]; s.seen++; s.last = today(); touchDay(s);
     bumpItem(c.p.id, c.ex.key, false, false);
     logDay(false); save();
     S.log.push({ pid: c.p.id, ok: false });
     const head = timeout ? "Tiden gick ut" : c.type === "rattfel" ? (c.truth ? "Den var faktiskt rätt" : "Den var fel") : "Inte den här gången";
-    showFb("bad", `<div class="h">✗ ${head}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div><div class="why">${c.ex.why}</div>
+    showFb("bad", `<div class="h">✗ ${head}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${c.type === "boj" && c.lastInput && c.diag && stripDia(norm(c.lastInput)) === stripDia(norm(c.ex.answer)) ? `<div class="why muted small">Du skrev <b>${esc(c.lastInput)}</b> – bara diakriterna skilde.</div>` : ""}<div class="why">${c.ex.why}</div>
       <div><button class="linkish" id="fb-rule">Visa hela regeln</button></div><div class="acts"><button class="cta bad" id="fb-next">Fortsätt</button></div>`);
     $("#fb-rule").addEventListener("click", () => { $("#fb .why").innerHTML = c.p.rule; $("#fb-rule").remove(); });
   }
@@ -407,6 +441,7 @@ function bumpItem(pid, key, ok, fast) {
   it.due = addDays(today(), INTERVALS[it.box]);
   P.items[k] = it;
 }
+function touchDay(s) { s.dayList = s.dayList || []; if (!s.dayList.includes(today())) { s.dayList.push(today()); if (s.dayList.length > 60) s.dayList.shift(); } }
 function logDay(ok) { const d = P.days[today()] || { n: 0, right: 0 }; d.n++; if (ok) d.right++; P.days[today()] = d; }
 function showFb(kind, html) { const fb = $("#fb"); fb.className = `fb show ${kind}`; fb.innerHTML = html; }
 function hideFb() { const fb = $("#fb"); fb.className = "fb"; fb.innerHTML = ""; }
@@ -549,7 +584,7 @@ function openHelp() {
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
-      <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Lärt</b> (du har börjat) → <b>Övat</b> (minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt och 15 rätt på tid). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Varje ord du gnuggat i ett mönster har en egen låda (som i Flippa). Fel → tillbaka till start och dags igen idag; rätt → längre intervall.</p></div></details>
+      <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Lärt</b> (du har börjat) → <b>Övat</b> (minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Varje ord du gnuggat i ett mönster har en egen låda (som i Flippa). Fel → tillbaka till start och dags igen idag; rätt → längre intervall.</p></div></details>
       <details><summary>Läsa eller göra?</summary><div class="more"><p>Båda, men mest göra. Regeln är max en skärm och läses en gång. Sedan är det övningarna som bygger färdigheten – ungefär 10 % läsa, 90 % göra. Fördjupningen under varje mönster är för när du blir nyfiken, inte ett krav.</p></div></details>
       <details><summary>Facit och källor</summary><div class="more"><p>Böjningsformerna kommer från Wiktionary (via kaikki.org), inte från en AI som gissar. Frekvensordningen kommer från undertexter (OpenSubtitles), så de vanligaste orden kommer först. Data: CC BY-SA 4.0.</p></div></details>
     </div>`);

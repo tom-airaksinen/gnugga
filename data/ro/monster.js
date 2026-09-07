@@ -84,6 +84,12 @@ const RO = (() => {
     return num === "sg" ? (fem ? a.fs : a.ms) : (fem ? a.fp : a.mp);
   }
   const persLabel = (pi) => `${PERS[pi].ro} · ${PERS[pi].sv}`;
+  /* Alla riktiga former av lemmat med etikett – motorn använder dem för att säga
+     "det är en riktig form, men fel form" i stället för en generell ledtråd. */
+  const nounForms = (n) => { const f = {}; f[n.w] = "grundformen (obestämd singular)"; f[n.f.sgd] = "bestämd singular"; f[n.f.pl] = "obestämd plural"; f[n.f.pld] = "bestämd plural"; if (n.f.gsd) f[n.f.gsd] = "genitiv-dativ singular"; if (n.f.gpd) f[n.f.gpd] = "genitiv-dativ plural"; return f; };
+  const verbForms = (v) => { const f = {}; v.pres.forEach((x, i) => { if (!f[x]) f[x] = `presens för ${PERS[i].ro}`; else f[x] += ` och ${PERS[i].ro}`; }); f[v.part] = "participet"; f[v.inf.slice(2)] = "infinitiven"; return f; };
+  const adjForms = (a) => { const f = {}; f[a.ms] = "maskulin singular"; if (!f[a.fs]) f[a.fs] = "feminin singular"; if (!f[a.mp]) f[a.mp] = "maskulin plural"; if (!f[a.fp]) f[a.fp] = "feminin plural"; return f; };
+  const STEM_HINT_N = "Kolla stammen: växlar en vokal (som fată → fete, masă → mese)?";
   const paradigm = (v, pi) => v.pres.map((f, i) => i === pi ? ro(f) : f).join(" · ");
   const svVerb = (v) => gl(v).split(/[,;(]/)[0].trim();
   const svPers = (pi, v) => `${PERS[pi].sv} ${svVerb(v)}`;
@@ -106,7 +112,7 @@ const RO = (() => {
         return { q: "Bestämd form av", big: w, sub: `${ART[n.g]} ${w} · ${gl(n)}`, answer: n.f.sgd,
           say: { sv: `${gl(n).split(/[,;]/)[0]} (bestämd form)`, ro: n.f.sgd },
           hint: `Ordet är <b>${GENUS[n.g]}</b> (${ART[n.g]} ${w}). Vilken ändelse får ${GENUS_PL[n.g]} ord som slutar på <b>-${w.endsWith("ie") ? "ie" : w.slice(-1)}</b>?`,
-          why: defRule(n), distractors: pad3(cands, [w + "ei", w + "lui"], n.f.sgd) };
+          why: defRule(n), distractors: pad3(cands, [w + "ei", w + "lui"], n.f.sgd), forms: nounForms(n), target: "bestämd singular", stemHint: STEM_HINT_N };
       } },
 
     { id: "n-pl", area: "Substantiv", name: "Plural obestämd", short: "Plural", order: 2,
@@ -126,7 +132,7 @@ const RO = (() => {
         return { q: "Plural av", big: w, sub: `${ART[n.g]} ${w} · ${gl(n)}`, answer: n.f.pl,
           say: { sv: `flera ${gl(n).split(/[,;]/)[0]}`, ro: n.f.pl },
           hint: `Ordet är <b>${GENUS[n.g]}</b>. ${n.g === "f" ? "Feminina får -e eller -i." : n.g === "m" ? "Maskulina får -i." : "Neutrum får -e eller -uri."}${vowelShift(n) ? " Och kolla om en vokal i stammen växlar." : ""}`,
-          why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl) };
+          why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl), forms: nounForms(n), target: "obestämd plural", stemHint: STEM_HINT_N };
       } },
 
     { id: "n-pldef", area: "Substantiv", name: "Bestämd form plural", short: "Bestämd plural", order: 3,
@@ -145,7 +151,7 @@ const RO = (() => {
         return { q: "Bestämd form plural av", big: n.w, sub: `plural: ${p} · ${gl(n)}`, answer: n.f.pld,
           say: { sv: `${gl(n).split(/[,;]/)[0]} (bestämd plural)`, ro: n.f.pld },
           hint: `Utgå från pluralen <b>${p}</b>. Den slutar på <b>-${p.endsWith("uri") ? "uri" : p.slice(-1)}</b> – vilken artikel hör dit?`,
-          why: plDefRule(n), distractors: pad3(cands, [p + "lor"], n.f.pld) };
+          why: plDefRule(n), distractors: pad3(cands, [p + "lor"], n.f.pld), forms: nounForms(n), target: "bestämd plural", stemHint: `Utgå från pluralen <b>${p}</b> – stammen ska vara som där.` };
       } },
 
     { id: "v-pres", area: "Verb", name: "Presens – de regelbundna grupperna", short: "Presens", order: 4,
@@ -168,7 +174,7 @@ const RO = (() => {
           say: { sv: svPers(pi, v), ro: v.pres[pi] },
           hint: `Verbet hör till <b>${GRP[v.grp]}</b>. Vilken ändelse får <b>${PERS[pi].ro}</b> där?`,
           why: `${v.inf} (${GRP[v.grp].split(" (")[0]}): ${paradigm(v, pi)}`,
-          distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m"], v.pres[pi]) };
+          distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m"], v.pres[pi]), forms: verbForms(v), target: `presens för ${PERS[pi].ro}`, stemHint: "Ändelsen stämmer, men stammen är inte riktigt rätt – flera verb växlar vokal i stammen (a putea: pot – poate)." };
       } },
 
     { id: "v-irr", area: "Verb", name: "Oregelbundna kärnverb", short: "Oregelbundna", order: 5,
@@ -191,7 +197,7 @@ const RO = (() => {
           say: { sv: svPers(pi, v), ro: v.pres[pi] },
           hint: `Oregelbundet – ingen ändelseregel hjälper. Tänk på hela raden för <b>${v.inf}</b> och plocka <b>${PERS[pi].ro}</b>.`,
           why: `${v.inf} (${gl(v)}): ${paradigm(v, pi)}`,
-          distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m", v.pres[pi] + "ți"], v.pres[pi]) };
+          distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m", v.pres[pi] + "ți"], v.pres[pi]), forms: verbForms(v), target: `presens för ${PERS[pi].ro}`, stemHint: "Slutet stämmer men inte början – oregelbundna verb byter ofta stam helt." };
       } },
 
     { id: "v-perf", area: "Verb", name: "Perfekt – am făcut", short: "Perfekt", order: 6,
@@ -212,7 +218,7 @@ const RO = (() => {
           say: { sv: `${PERS[pi].sv} har ${svVerb(v)} (perfekt)`, ro: ans },
           hint: `Hjälpverbet är <i>a avea</i> i kortform – vilken form hör till <b>${PERS[pi].ro}</b>? Participet av ${v.inf} är <b>${v.part}</b>.`,
           why: `am · ai · a · am · ați · au + <b>${v.part}</b> → ${ro(ans)}`,
-          distractors: pad3(AUX.map((a) => `${a} ${v.part}`), [`${AUX[pi]} ${v.inf.slice(2)}`], ans) };
+          distractors: pad3(AUX.map((a) => `${a} ${v.part}`), [`${AUX[pi]} ${v.inf.slice(2)}`], ans), forms: Object.fromEntries(AUX.map((a, i) => [`${a} ${v.part}`, `perfekt för ${PERS[i].ro}`])), target: `perfekt för ${PERS[pi].ro}`, stemHint: `Hjälpverbet stämmer – kolla participet. Participet av ${v.inf} är <b>${v.part}</b>.` };
       } },
 
     { id: "adj", area: "Adjektiv", name: "Adjektivet följer med", short: "Adjektiv", order: 7,
@@ -239,7 +245,7 @@ const RO = (() => {
           say: { sv: `${num === "sg" ? "" : "flera "}${gl(a).split(/[,;]/)[0]} ${gl(n).split(/[,;]/)[0]}`, ro: `${nounForm} ${ans}` },
           hint: `Substantivet är <b>${GENUS[n.g]}</b>, <b>${num === "sg" ? "singular" : "plural"}</b>.${n.g === "n" ? " Neutrum: maskulint i singular, feminint i plural." : ""} Vilken av adjektivets fyra rutor är det?`,
           why: `${a.ms} har formerna ${forms.join(" · ")}. <b>${nounForm}</b> är ${fem ? "feminin" : "maskulin"} form i ${num === "sg" ? "singular" : "plural"} → ${ro(nounForm + " " + ans)}.`,
-          distractors: pad3(forms, [a.ms + "ă", a.ms + "i", a.ms + "e", a.ms.slice(0, -1) + "ă", a.ms.slice(0, -1) + "i"], ans) };
+          distractors: pad3(forms, [a.ms + "ă", a.ms + "i", a.ms + "e", a.ms.slice(0, -1) + "ă", a.ms.slice(0, -1) + "i"], ans), forms: adjForms(a), target: `${fem ? "feminin" : "maskulin"} ${num === "sg" ? "singular" : "plural"}`, stemHint: `Ändelsen stämmer men stammen ändras – ${a.ms} har formerna ${forms.join(" · ")}.` };
       } },
 
     { id: "n-gd", area: "Substantiv", name: "Genitiv-dativ – casei, băiatului", short: "Genitiv-dativ", order: 8,
@@ -261,7 +267,7 @@ const RO = (() => {
         return { q: pl ? "Genitiv-dativ plural av" : "Genitiv-dativ singular av", big: n.w, sub: `${ART[n.g]} ${n.w} · ${gl(n)} → "${pl ? gl(n).split(/[,;]/)[0] + "ens" : gl(n).split(/[,;]/)[0] + "ets"} / till ${base}"`,
           answer: ans, say: { sv: `${pl ? "till " + gl(n).split(/[,;]/)[0] + "en (plural)" : "till " + gl(n).split(/[,;]/)[0] + "et"}`, ro: ans },
           hint: pl ? `Plural får alltid <b>-lor</b>. Utgå från pluralen <b>${n.f.pl}</b>.` : n.g === "f" ? `Feminint: utgå från <b>pluralen ${n.f.pl}</b> och lägg på -i.` : `${GENUS[n.g]}: utgå från bestämd form <b>${n.f.sgd}</b> och lägg på -ui.`,
-          why: pl ? `Plural i genitiv-dativ: ${n.f.pl} + -lor → ${ro(ans)}.` : gdRule(n), distractors: pad3(cands, [n.w + "ului", n.w + "ei"], ans) };
+          why: pl ? `Plural i genitiv-dativ: ${n.f.pl} + -lor → ${ro(ans)}.` : gdRule(n), distractors: pad3(cands, [n.w + "ului", n.w + "ei"], ans), forms: nounForms(n), target: pl ? "genitiv-dativ plural" : "genitiv-dativ singular", stemHint: n.g === "f" && !pl ? `Utgå från pluralen <b>${n.f.pl}</b> – stammen ska vara som där.` : STEM_HINT_N };
       } },
   ];
 
