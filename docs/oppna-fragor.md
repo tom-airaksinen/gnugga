@@ -9,16 +9,24 @@
 - [ ] Ska passet blanda in Flippa-glosor (kända ord) som bas för böjningarna redan i v1?
 
 ## Innehåll
-- [ ] Vilka ~800 lemman ska in i v1-lexikonet – frekvenslista, Flippa-orden, eller båda?
+- [x] Vilka lemman i v1-lexikonet? → **Svar:** 700 substantiv, 300 verb, 220 adjektiv efter frekvens i OpenSubtitles (summa minus största formen, för att slippa homografer). Flippa-orden som prioritering är kvar som idé (2026-09-07)
 - [ ] Hur hanteras variantformer (căpșuni/căpșune, mânc/mănânc) – acceptera båda, visa den normerade?
-- [ ] Behöver v1 genitiv-dativ alls för en resa, eller räcker "la + bestämd form"?
+- [x] Behöver v1 genitiv-dativ? → **Svar:** Med som åttonde och sista mönster – datan finns ändå och skyltar/namn använder genitiv hela tiden (2026-09-07)
 
 ## Teknik
 - [x] Firebase eller statiskt innehåll? → **Svar:** Statiskt i repot; innehållet är kurerat, bara progress är personlig. (2026-09-07)
-- [ ] Egen repo `gnugga` under tom-airaksinen på GitHub Pages (`tom-airaksinen.github.io/gnugga`)? Egen domän som Flippa?
-- [ ] Rumänsk TTS på iOS: verifiera att Ioana faktiskt finns på din telefon och att `ș`/`ț` läses rätt.
-- [ ] Är kaikki:s språkspecifika dump (markerad DEPRECATED) stabil nog, eller ska pipelinen läsa den stora rådumpen?
+- [x] Egen repo `gnugga` under tom-airaksinen på GitHub Pages? → **Svar:** Ja, publik repo som Flippa, live på tom-airaksinen.github.io/gnugga (2026-09-07). Egen domän (gnugga.tomairaksinen.se) är fortfarande öppen.
+- [ ] Rumänsk TTS på iOS: verifiera att Ioana faktiskt finns på din telefon och att `ș`/`ț` läses rätt. (På Mac saknades röst → prototypen läste med engelsk röst. Appen läser nu bara upp om en rumänsk röst finns, annars döljs 🔊.)
+- [ ] Är kaikki:s språkspecifika dump (markerad DEPRECATED) stabil nog, eller ska pipelinen läsa den stora rådumpen? (Fungerade 2026-09-07, 311 MB.)
 
 ## Design
-- [ ] Färgtema: teal/mint som prototypen, eller närmare Flippas blå?
+- [x] Färgtema? → **Svar:** Mint-accent (#3fcfa8) på mörk botten, så apparna går att skilja på hemskärmen (2026-09-07)
 - [ ] Ska Gnugga ha profiler som Flippa (Hedvig/Harry), eller är det bara din app?
+
+## Efter v1 (nytt 2026-09-07)
+- [ ] GoatCounter för Gnugga (egen sajt gnugga.goatcounter.com) när appen delas med andra. `track()` finns som stubb i app.js.
+- [ ] Flippa-koppling: länk "Gnugga grammatiken" från rumänska ämnet, och prioritera Flippa-orden i Gnuggas lemma-val.
+- [ ] Verifiera på iPhone: tangentbordets ă â î ș ț-knappar vs iOS rumänska tangentbord, och att `enterkeyhint="done"` funkar.
+- [ ] Rätt eller fel?-övningen: 4 sekunder – för kort/långt? Ska den mätas som "på tid" även för Böj under 7 s?
+- [ ] Alternativa former: `e` för `este` accepteras; fler behövs? (t.ex. `mânc/mănânc`, `căpșuni/căpșune`)
+- [ ] Konjunktiv med `să` (sub3 finns redan i lexikonet) och framtid `o să` som mönster 9–10.
