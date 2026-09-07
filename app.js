@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v12";
+const APP_VERSION = "v13";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -493,11 +493,14 @@ function launchConfetti(count) {
   const COLS = ["#3fcfa8", "#7ee6c9", "#f2b84b", "#5bbf72", "#ff8a3d", "#5b8cff", "#ffffff"];
   const rp = (a, b) => a + Math.random() * (b - a);
   let parts = [];
+  // Skur från övre mitten: kraftig sidofart så bitarna sprätter ut mot väggarna och
+  // studsar (Flippa får samma effekt av ringen runt emojin – Gnugga har ingen ring).
   for (let i = 0; i < count; i++) {
-    parts.push({ x: rp(8, W - 8), y: -rp(10, 180), vx: rp(-1.3, 1.3), vy: rp(0.4, 1.8),
-      w: rp(6, 11), h: rp(5, 9), rot: rp(0, 6.28), vr: rp(-0.25, 0.25), col: COLS[i % COLS.length], rest: false, dead: false });
+    const side = i % 2 ? 1 : -1;
+    parts.push({ x: W / 2 + rp(-30, 30), y: rp(-40, 60), vx: side * rp(1.5, 5.5), vy: rp(-3.5, 1.0),
+      w: rp(6, 11), h: rp(5, 9), rot: rp(0, 6.28), vr: rp(-0.3, 0.3), col: COLS[i % COLS.length], rest: false, dead: false });
   }
-  const G = 0.17, REST = 0.55, AIR = 0.994, M = 5;
+  const G = 0.16, REST = 0.55, WALL = 0.78, AIR = 0.992, M = 5;
   let frames = 0;
   function step() {
     frames++;
@@ -506,8 +509,8 @@ function launchConfetti(count) {
     for (const p of parts) {
       if (!p.rest) {
         p.vy += G; p.vx *= AIR; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-        if (p.x < M) { p.x = M; p.vx = Math.abs(p.vx) * REST; }
-        else if (p.x > W - M) { p.x = W - M; p.vx = -Math.abs(p.vx) * REST; }
+        if (p.x < M) { p.x = M; p.vx = Math.abs(p.vx) * WALL; p.vr += rp(-0.2, 0.2); }
+        else if (p.x > W - M) { p.x = W - M; p.vx = -Math.abs(p.vx) * WALL; p.vr += rp(-0.2, 0.2); }
         if (p.vy > 0 && p.x > btn.left - 3 && p.x < btn.right + 3 && (p.y + p.h / 2) >= btn.top && p.y < btn.top + 16) {
           p.y = btn.top - p.h / 2; p.vy = -p.vy * 0.28; p.vx *= 0.55;
           if (Math.abs(p.vy) < 0.7) { p.vy = 0; p.vx *= 0.4; if (Math.abs(p.vx) < 0.25) { p.rest = true; p.y = btn.top - p.h / 2; } }
