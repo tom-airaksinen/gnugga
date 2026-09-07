@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v10";
+const APP_VERSION = "v11";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -636,8 +636,20 @@ async function boot() {
   }
   updateVoice();
   renderHome();
-  const splash = $("#splash"); $("#splash-ver").textContent = APP_VERSION;
-  try { if (sessionStorage.getItem("gnugga-updated")) { $("#splash-note").textContent = `Uppdaterad till ${APP_VERSION}`; sessionStorage.removeItem("gnugga-updated"); } } catch (_) {}
-  setTimeout(() => { splash.classList.add("hide"); setTimeout(() => splash.remove(), 450); }, 250);
+  // Splashen ligger kvar minst SPLASH_MIN_MS (som Flippa) så den inte bara flimrar till –
+  // och längre vid uppdatering så man hinner läsa vad som händer.
+  const splash = $("#splash");
+  const minMs = splashUpdated ? SPLASH_MIN_UPDATE_MS : SPLASH_MIN_MS;
+  setTimeout(() => { splash.classList.add("hide"); setTimeout(() => splash.remove(), 450); }, Math.max(0, minMs - (performance.now() - bootT0)));
 }
+const SPLASH_MIN_MS = 700, SPLASH_MIN_UPDATE_MS = 1800;
+const bootT0 = performance.now();
+let splashUpdated = false;
+$("#splash-ver").textContent = APP_VERSION;
+try {
+  if (sessionStorage.getItem("gnugga-updated")) {
+    sessionStorage.removeItem("gnugga-updated"); splashUpdated = true;
+    $("#splash-note").textContent = `Uppdaterar till ${APP_VERSION}…`;
+  }
+} catch (_) {}
 boot();

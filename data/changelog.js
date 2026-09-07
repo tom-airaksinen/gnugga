@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v11", items: [
+    { t: "Vid uppdatering ligger startbilden kvar lite längre med texten \"Uppdaterar till …\" så man hinner se vad som händer, i stället för att flimra till", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v10", items: [
     { t: "Ledtråden efter ett fel svar tittar nu på vad som faktiskt blev fel: bara krumelurerna (ă â î ș ț), ett felskrivet tecken, rätt ändelse men fel stam, eller en riktig form av ordet fast fel form", type: "new", hi: true, ico: "🔍",
       desc: "Tidigare kom alltid samma tips om ändelsen, även när ändelsen var rätt och det var ett â som saknades. Nu markeras det tecken som skiljer, utan att facit avslöjas." },
