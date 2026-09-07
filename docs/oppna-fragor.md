@@ -30,3 +30,4 @@
 - [ ] Rätt eller fel?-övningen: 4 sekunder – för kort/långt? Ska den mätas som "på tid" även för Böj under 7 s?
 - [ ] Alternativa former: `e` för `este` accepteras; fler behövs? (t.ex. `mânc/mănânc`, `căpșuni/căpșune`)
 - [ ] Konjunktiv med `să` (sub3 finns redan i lexikonet) och framtid `o să` som mönster 9–10.
+- [ ] Kvalitetssäkring av rumänskan: granskningssidan (`granskning.html`) skickad till någon? Anmärkningar tillbaka → rätta i `sv-gloss.json`, `monster.js`, blocklistan i pipelinen.

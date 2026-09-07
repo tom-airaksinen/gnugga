@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gnugga – granskning av rumänskt innehåll</title>
+<style>
+  :root { color-scheme: light; --bg: #f6f8f7; --surface: #fff; --text: #16262a; --muted: #5f7370; --accent: #1f9e7c; --warm: #b7791f; --fail: #c0392b; --line: #d9e2df; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; }
+  h2 { font-size: 1.3rem; margin: 40px 0 10px; padding-top: 10px; border-top: 2px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 22px 0 6px; }
+  p { max-width: 72ch; }
+  .lead { color: var(--muted); }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+  .box.rule { border-left: 4px solid var(--accent); }
+  .ro { color: var(--accent); font-weight: 700; } .sv { color: var(--warm); }
+  ol.prio li { margin: 4px 0; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+  nav a { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; text-decoration: none; color: var(--text); font-size: .9rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; background: var(--surface); }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; margin: 8px 0 16px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #edf3f1; position: sticky; top: 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  td.n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  tr.flagged td { background: #fff4e5; }
+  .flag { display: inline-flex; align-items: center; gap: 6px; }
+  .flag input[type=checkbox] { width: 18px; height: 18px; }
+  .note { width: 100%; min-width: 160px; font: inherit; font-size: .85rem; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; display: none; margin-top: 4px; }
+  tr.flagged .note, .box.flagged .note { display: block; }
+  .box.flagged { background: #fff4e5; }
+  .ex { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .ex .q { color: var(--muted); font-size: .85rem; }
+  .ex .a { font-weight: 700; }
+  .ex .h { font-size: .9rem; } .ex .h b { color: var(--warm); font-weight: 700; }
+  .ex .d { font-size: .85rem; color: var(--muted); }
+  .exs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+  .toolbar { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 18px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  button { font: inherit; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+  .count { color: var(--muted); font-size: .9rem; }
+  textarea#out { width: 100%; min-height: 200px; font: 13px/1.4 ui-monospace, Menlo, monospace; margin-top: 10px; }
+  .filter { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; width: 260px; }
+  mark { background: #fff1c4; }
+  @media (max-width: 700px) { .filter { width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Gnugga – granskning av rumänskt innehåll</h1>
+  <p class="lead">Gnugga är en liten app för svensktalande som vill öva rumänsk grammatik: bestämd form, plural, verbböjning, adjektiv. Den här sidan visar <b>allt språkligt innehåll</b> appen bygger sina övningar av. Böjningsformerna kommer från Wiktionary; regeltexter och svenska glosor är handskrivna. Vi vill veta var det är fel, konstigt eller missvisande.</p>
+
+  <div class="box">
+    <b>Så här granskar du.</b> Kryssa i <b>Flagga</b> vid allt som är fel eller tveksamt och skriv gärna ett par ord i rutan som dyker upp. Flaggorna sparas i din webbläsare medan du jobbar. När du är klar: tryck <b>Kopiera anmärkningar</b> längst ner och klistra in i ett mejl eller meddelande till Tom. Du behöver inte gå igenom allt – prioriteringen nedan säger var det är mest värt.
+  </div>
+
+  <h3>Viktigast att granska, i ordning</h3>
+  <ol class="prio">
+    <li><b>Regeltexterna</b> under varje mönster (del 1). Är de korrekta? Förenklade på ett vettigt sätt, eller missvisande?</li>
+    <li><b>De svenska glosorna</b> för de vanligaste orden (kolumnen <i>svenska</i> i del 2–4, sorterat efter frekvens – börja uppifrån).</li>
+    <li><b>Ordurvalet:</b> ord som inte hör hemma i en app för resenärer/nybörjare, eller ord som är fel (homografer, varianter).</li>
+    <li><b>Formerna:</b> stickprov på plural och genitiv-dativ (del 3). När två pluraler finns – är den som visas den vanliga?</li>
+    <li><b>Verbens grupp</b> (del 2, kolumnen <i>grupp</i>) – den styr vilken ledtråd appen ger.</li>
+    <li><b>Adjektiv</b> som normalt står <i>före</i> substantivet eller inte funkar i mallen "substantiv + adjektiv" (del 4).</li>
+    <li><b>Exempelövningarna:</b> ledtrådar som avslöjar för mycket, förklaringar som är fel, felaktiga alternativ som råkar vara riktiga ord.</li>
+  </ol>
+
+  <nav id="nav"></nav>
+  <div id="content"><p class="lead">Läser in innehållet…</p></div>
+
+  <h2 id="anm">Dina anmärkningar</h2>
+  <p class="lead">Här samlas allt du flaggat. Kopiera och skicka till Tom.</p>
+  <textarea id="out" readonly placeholder="Inget flaggat än."></textarea>
+</main>
+<div class="toolbar">
+  <span class="count" id="count">0 flaggade</span>
+  <button class="primary" id="copy">Kopiera anmärkningar</button>
+  <button id="clear">Rensa alla flaggor</button>
+</div>
+
+<script src="data/ro/monster.js"></script>
+<script>
+"use strict";
+const LANG = window.GNUGGA_LANG;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const FKEY = "gnugga-granskning-flaggor";
+let FL = {}; try { FL = JSON.parse(localStorage.getItem(FKEY)) || {}; } catch (_) {}
+const saveFl = () => { try { localStorage.setItem(FKEY, JSON.stringify(FL)); } catch (_) {} renderOut(); };
+
+function flagCell(id, label) {
+  const f = FL[id];
+  return `<label class="flag"><input type="checkbox" data-flag="${esc(id)}" data-label="${esc(label)}" ${f ? "checked" : ""}> Flagga</label><input class="note" data-note="${esc(id)}" placeholder="Vad är fel?" value="${esc(f && f.note || "")}">`;
+}
+function bindFlags(root) {
+  root.querySelectorAll("[data-flag]").forEach((cb) => cb.addEventListener("change", () => {
+    const id = cb.dataset.flag, row = cb.closest("tr, .box");
+    if (cb.checked) { FL[id] = { label: cb.dataset.label, note: (FL[id] && FL[id].note) || "" }; row.classList.add("flagged"); const n = row.querySelector(`[data-note="${CSS.escape(id)}"]`); if (n) n.focus(); }
+    else { delete FL[id]; row.classList.remove("flagged"); }
+    saveFl();
+  }));
+  root.querySelectorAll("[data-note]").forEach((inp) => inp.addEventListener("input", () => { const id = inp.dataset.note; if (FL[id]) { FL[id].note = inp.value; saveFl(); } }));
+  root.querySelectorAll("[data-flag]:checked").forEach((cb) => cb.closest("tr, .box").classList.add("flagged"));
+}
+function renderOut() {
+  const ids = Object.keys(FL);
+  $("#count").textContent = `${ids.length} flaggade`;
+  $("#out").value = ids.length ? `Gnugga – anmärkningar (${new Date().toLocaleDateString("sv-SE")})\n\n` + ids.map((id) => `• ${FL[id].label}${FL[id].note ? `\n  → ${FL[id].note}` : ""}`).join("\n") : "";
+}
+$("#copy").addEventListener("click", async () => { renderOut(); try { await navigator.clipboard.writeText($("#out").value); $("#copy").textContent = "Kopierat!"; setTimeout(() => $("#copy").textContent = "Kopiera anmärkningar", 1500); } catch (_) { $("#out").select(); } });
+$("#clear").addEventListener("click", () => { if (confirm("Rensa alla flaggor?")) { FL = {}; saveFl(); document.querySelectorAll("[data-flag]").forEach((cb) => { cb.checked = false; cb.closest("tr, .box").classList.remove("flagged"); }); } });
+
+const gl = (x) => x.sv || x.en || "";
+const nth = (arr, i) => arr[(i * 7) % arr.length];
+
+async function main() {
+  const L = await (await fetch("data/ro/lexikon.json")).json();
+  const P = LANG.patterns.slice().sort((a, b) => a.order - b.order);
+  let h = "";
+
+  // ---- Del 1: mönster ----
+  h += `<h2 id="d1">Del 1 · Mönster: regler, exempel och genererade övningar</h2>
+    <p class="lead">Varje mönster har en kort regel som användaren läser en gång, tre exempel, en fördjupning, och övningar som genereras ur ordlistan. Här visas 12 genererade övningar per mönster med den ledtråd (utan facit) och förklaring (med facit) appen ger vid fel svar, samt de felaktiga svarsalternativen i flervalsläget.</p>`;
+  for (const p of P) {
+    h += `<h3 id="p-${p.id}">${p.order}. ${esc(p.name)} <span class="lead">(${esc(p.area)})</span></h3>
+      <div class="box rule"><b>Regel</b><div>${p.rule}</div>${flagCell(`regel:${p.id}`, `Regel – ${p.name}`)}</div>
+      <div class="box"><b>Exempel</b><div>${p.examples.map(([f, t, sv]) => `${esc(f)} → <b>${esc(t)}</b> <span class="lead">(${esc(sv)})</span>`).join(" &nbsp;·&nbsp; ")}</div>${flagCell(`exempel:${p.id}`, `Exempel – ${p.name}`)}</div>
+      <div class="box"><b>Fördjupning</b><div>${p.more}</div>${flagCell(`fordjupning:${p.id}`, `Fördjupning – ${p.name}`)}</div>
+      <div class="exs">`;
+    const pool = p.pool(L);
+    for (let i = 0; i < 12; i++) {
+      const lemma = nth(pool, i + 1);
+      let ex; try { ex = p.gen(lemma, L); } catch (e) { h += `<div class="box">Fel vid generering: ${esc(e.message)}</div>`; continue; }
+      const id = `ovning:${p.id}:${plain(ex.big)}:${ex.answer}`;
+      h += `<div class="box ex"><div class="q">${esc(ex.q)} · ${esc(ex.sub || "")}${ex.gloss ? " · " + esc(ex.gloss) : ""}</div><div class="a">${esc(plain(ex.big))} → ${esc(ex.full || ex.answer)}${ex.alts && ex.alts.length ? ` <span class="lead">(även: ${esc(ex.alts.join(", "))})</span>` : ""}</div>
+        <div class="h"><b>Ledtråd:</b> ${ex.hint}</div><div class="h"><b>Förklaring:</b> ${ex.why}</div><div class="d">Felaktiga alternativ: ${ex.distractors.map(esc).join(" · ")}</div><div class="d">Säg det: "${esc(ex.say.sv)}" → ${esc(ex.say.ro)}</div>
+        ${flagCell(id, `Övning ${p.name}: ${plain(ex.big)} → ${ex.full || ex.answer}`)}</div>`;
+    }
+    h += `</div>`;
+  }
+
+  // ---- Del 2: verb ----
+  h += `<h2 id="d2">Del 2 · Verb (${L.verbs.length})</h2><p class="lead">Sorterade efter frekvens. <i>Grupp</i> styr appens ledtråd: a = cânt-typ, a-ez = lucrez-typ, i-esc = vorbesc-typ, i = dorm-typ, e = merg-typ, ea = văd-typ, î = cobor-typ, irr = oregelbundet.</p>
+    <input class="filter" placeholder="Filtrera verb…" data-filter="t-verb">
+    <div class="tw"><table id="t-verb"><thead><tr><th>#</th><th>infinitiv</th><th>grupp</th><th>eu</th><th>tu</th><th>el/ea</th><th>noi</th><th>voi</th><th>ei/ele</th><th>particip</th><th>să (3 sg)</th><th>svenska</th><th></th></tr></thead><tbody>`;
+  for (const v of L.verbs) h += `<tr><td class="n">${v.rank}</td><td><b>${esc(v.inf)}</b></td><td>${esc(v.grp)}</td>${v.pres.map((x) => `<td>${esc(x)}</td>`).join("")}<td>${esc(v.part)}</td><td>${esc(v.sub3)}</td><td class="sv">${esc(gl(v))}</td><td>${flagCell(`verb:${v.inf}`, `Verb ${v.inf} (${v.grp}) – ${v.pres.join(", ")}; ${v.part}; sv: ${gl(v)}`)}</td></tr>`;
+  h += `</tbody></table></div>`;
+
+  // ---- Del 3: substantiv ----
+  h += `<h2 id="d3">Del 3 · Substantiv (${L.nouns.length})</h2><p class="lead">Sorterade efter frekvens. Kolumnerna är obestämd singular (grundform), bestämd singular, obestämd plural, bestämd plural, genitiv-dativ bestämd singular och plural.</p>
+    <input class="filter" placeholder="Filtrera substantiv…" data-filter="t-noun">
+    <div class="tw"><table id="t-noun"><thead><tr><th>#</th><th>ord</th><th>genus</th><th>best. sg</th><th>plural</th><th>best. pl</th><th>G-D sg</th><th>G-D pl</th><th>svenska</th><th></th></tr></thead><tbody>`;
+  for (const n of L.nouns) h += `<tr><td class="n">${n.rank}</td><td><b>${esc(n.w)}</b></td><td>${n.g}</td><td>${esc(n.f.sgd)}</td><td>${esc(n.f.pl)}</td><td>${esc(n.f.pld)}</td><td>${esc(n.f.gsd)}</td><td>${esc(n.f.gpd)}</td><td class="sv">${esc(gl(n))}</td><td>${flagCell(`subst:${n.w}`, `Substantiv ${n.w} (${n.g}) – ${n.f.sgd}, ${n.f.pl}, ${n.f.pld}, ${n.f.gsd}, ${n.f.gpd}; sv: ${gl(n)}`)}</td></tr>`;
+  h += `</tbody></table></div>`;
+
+  // ---- Del 4: adjektiv ----
+  h += `<h2 id="d4">Del 4 · Adjektiv (${L.adjs.length})</h2><p class="lead">Appen sätter adjektivet <i>efter</i> substantivet och böjer efter genus och numerus. Flagga adjektiv som normalt står före substantivet eller som inte passar mallen.</p>
+    <input class="filter" placeholder="Filtrera adjektiv…" data-filter="t-adj">
+    <div class="tw"><table id="t-adj"><thead><tr><th>#</th><th>m sg</th><th>f sg</th><th>m pl</th><th>f pl</th><th>svenska</th><th></th></tr></thead><tbody>`;
+  for (const a of L.adjs) h += `<tr><td class="n">${a.rank}</td><td><b>${esc(a.ms)}</b></td><td>${esc(a.fs)}</td><td>${esc(a.mp)}</td><td>${esc(a.fp)}</td><td class="sv">${esc(gl(a))}</td><td>${flagCell(`adj:${a.ms}`, `Adjektiv ${a.ms}, ${a.fs}, ${a.mp}, ${a.fp}; sv: ${gl(a)}`)}</td></tr>`;
+  h += `</tbody></table></div>
+    <p class="lead">Data: Wiktionary via kaikki.org (CC BY-SA 4.0), byggd ${esc(L.built)}. Frekvens: OpenSubtitles.</p>`;
+
+  $("#content").innerHTML = h;
+  $("#nav").innerHTML = `<a href="#d1">Del 1 · Mönster</a>` + P.map((p) => `<a href="#p-${p.id}">${p.order}. ${esc(p.short)}</a>`).join("") + `<a href="#d2">Del 2 · Verb</a><a href="#d3">Del 3 · Substantiv</a><a href="#d4">Del 4 · Adjektiv</a><a href="#anm">Anmärkningar</a>`;
+  bindFlags($("#content"));
+  document.querySelectorAll("[data-filter]").forEach((inp) => inp.addEventListener("input", () => {
+    const q = inp.value.trim().toLowerCase(); const t = document.getElementById(inp.dataset.filter);
+    t.querySelectorAll("tbody tr").forEach((tr) => { tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none"; });
+  }));
+  renderOut();
+}
+main().catch((e) => { $("#content").innerHTML = `<p>Kunde inte läsa innehållet: ${esc(e.message)}</p>`; });
+</script>
+</body>
+</html>

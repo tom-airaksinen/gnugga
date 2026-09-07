@@ -50,6 +50,13 @@ frekvens i undertexter. Svenska glosor för alla.
 
 Ingen backend, ingen inloggning, ingen Firebase: innehållet är kurerat och versionshanterat här.
 
+## Granskning
+
+`granskning.html` (live: https://tom-airaksinen.github.io/gnugga/granskning.html) visar allt språkligt
+innehåll för en mänsklig granskare: regeltexter, exempel, 12 genererade övningar per mönster med
+ledtrådar och förklaringar, samt hela lexikonet med former och svenska glosor. Granskaren flaggar
+rader, skriver anmärkningar och kopierar dem som text (sparas i webbläsaren, ingen server).
+
 ## Data-pipeline
 
 ```
