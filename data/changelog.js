@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v14", items: [
+    { t: "Mer luft i Säg det-övningen mellan svaret och knapparna", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v13", items: [
     { t: "Konfettin skjuts ut från mitten och studsar mot sidorna i stället för att falla rakt ner", type: "improved" },
   ]},

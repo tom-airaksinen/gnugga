@@ -167,8 +167,9 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .timer i { display: block; height: 100%; width: 100%; background: var(--warm); transform-origin: left; }
 .timer.run i { animation: shrink 4s linear forwards; }
 @keyframes shrink { to { transform: scaleX(0); } }
-.reveal { background: var(--surface); border-radius: 14px; padding: 18px; text-align: center; font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; overflow-wrap: anywhere; }
-.selfgrade { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.reveal { background: var(--surface); border-radius: 14px; padding: 22px 18px; margin-top: 10px; text-align: center; font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; overflow-wrap: anywhere; }
+.selfgrade { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.reveal + .note { margin-top: 6px; }
 .selfgrade button { border-radius: 14px; padding: 16px; font-weight: 800; font-size: 1.05rem; }
 .selfgrade .y { background: rgba(91,191,114,.2); color: var(--good); }
 .selfgrade .n { background: rgba(224,96,79,.2); color: var(--fail); }
