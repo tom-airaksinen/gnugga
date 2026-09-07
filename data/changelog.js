@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v8", items: [
+    { t: "Konfetti på klar-skärmen, samma fysik som i Flippa: bitarna faller, studsar mot kanterna och lägger sig på Klart-knappen. Mer konfetti när passet gick bra", type: "new", hi: true, ico: "🎉",
+      desc: "Ett litet firande gör att man vill komma tillbaka. Följer telefonens inställning för minskad rörelse – då visas ingen konfetti." },
+  ]},
   { date: "7 september 2026", ver: "v7", items: [
     { t: "Vad är nytt: jämna marginaler, och flera versioner samma dag visas som en dag", type: "improved" },
   ]},

@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v7";
+const APP_VERSION = "v8";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -433,9 +433,59 @@ function finish() {
     ${touched.length ? `<div class="eyebrow">Mönster i passet</div><div style="display:flex;flex-direction:column;gap:8px">${touched.map((pid) => { const b = S.before[pid], a = pct(pid); const d = a - b; return `<div class="delta"><div class="n">${byId[pid].name}</div>${lvlHtml(pid)}<div class="d ${d > 0 ? "up" : ""}">${d > 0 ? "+" : ""}${d} %</div></div>`; }).join("")}</div>` : ""}
     <div class="tip"><b>Grundtanke.</b> ${pick(TIPS)}</div>
     <button class="cta" id="done-home">Klart</button>`;
-  $("#done-home").addEventListener("click", () => { S = null; renderHome(); show("s-home"); });
+  $("#done-home").addEventListener("click", () => { S = null; cancelAnimationFrame(cfRaf); renderHome(); show("s-home"); });
   S = null;
   show("s-done");
+  requestAnimationFrame(() => launchConfetti(acc >= 80 ? 90 : 45));
+}
+
+/* Fysik-konfetti på canvas (portad från Flippa): faller med gravitation, studsar mot
+   sidokanterna, en del landar och blir liggande på Klart-knappen, resten faller ut i botten. */
+const prefersReducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+let cfRaf = null;
+function launchConfetti(count) {
+  const screen = $("#s-done"), canvas = $("#done-canvas"), btnEl = $("#done-home");
+  if (!canvas || !btnEl) return;
+  cancelAnimationFrame(cfRaf);
+  const ctx = canvas.getContext("2d");
+  const W = screen.clientWidth, H = screen.clientHeight;
+  if (prefersReducedMotion || !W) { canvas.width = W; canvas.height = H; return; }
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sr = screen.getBoundingClientRect(), bb = btnEl.getBoundingClientRect();
+  const btn = { top: bb.top - sr.top, left: bb.left - sr.left, right: bb.right - sr.left };
+  const COLS = ["#3fcfa8", "#7ee6c9", "#f2b84b", "#5bbf72", "#ff8a3d", "#5b8cff", "#ffffff"];
+  const rp = (a, b) => a + Math.random() * (b - a);
+  let parts = [];
+  for (let i = 0; i < count; i++) {
+    parts.push({ x: rp(8, W - 8), y: -rp(10, 180), vx: rp(-1.3, 1.3), vy: rp(0.4, 1.8),
+      w: rp(6, 11), h: rp(5, 9), rot: rp(0, 6.28), vr: rp(-0.25, 0.25), col: COLS[i % COLS.length], rest: false, dead: false });
+  }
+  const G = 0.17, REST = 0.55, AIR = 0.994, M = 5;
+  let frames = 0;
+  function step() {
+    frames++;
+    ctx.clearRect(0, 0, W, H);
+    let moving = 0;
+    for (const p of parts) {
+      if (!p.rest) {
+        p.vy += G; p.vx *= AIR; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        if (p.x < M) { p.x = M; p.vx = Math.abs(p.vx) * REST; }
+        else if (p.x > W - M) { p.x = W - M; p.vx = -Math.abs(p.vx) * REST; }
+        if (p.vy > 0 && p.x > btn.left - 3 && p.x < btn.right + 3 && (p.y + p.h / 2) >= btn.top && p.y < btn.top + 16) {
+          p.y = btn.top - p.h / 2; p.vy = -p.vy * 0.28; p.vx *= 0.55;
+          if (Math.abs(p.vy) < 0.7) { p.vy = 0; p.vx *= 0.4; if (Math.abs(p.vx) < 0.25) { p.rest = true; p.y = btn.top - p.h / 2; } }
+        }
+        if (p.y - 12 > H) p.dead = true;
+        if (!p.dead) moving++;
+      }
+      if (!p.dead) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); }
+    }
+    parts = parts.filter((p) => !p.dead);
+    if (parts.length && moving > 0 && frames < 900) cfRaf = requestAnimationFrame(step);
+  }
+  step();
 }
 
 /* ============================================================
