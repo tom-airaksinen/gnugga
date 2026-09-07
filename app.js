@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v2";
+const APP_VERSION = "v3";
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
 const byId = Object.fromEntries(PATTERNS.map((p) => [p.id, p]));
@@ -33,7 +33,7 @@ function track() { /* GoatCounter läggs till när appen delas – se docs/oppna
    ============================================================ */
 let L = null;      // lexikon
 let P = null;      // progress
-let SET = { passLen: 20, tts: true, name: "" };
+let SET = { passLen: 12, tts: true, name: "" };
 
 function loadProgress() {
   try { P = JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { P = null; }
@@ -449,7 +449,7 @@ function openSettings() {
   openModal(`<div class="mh"><h2>Inställningar</h2><button class="ib" id="m-close">✕</button></div>
     <div class="set">
       <div class="set-row"><span class="set-body"><span class="set-t">Övningar per pass</span><span class="set-d">Ungefär 15 sekunder per övning</span></span>
-        <div class="seg" id="seg-len">${[12, 20, 30].map((n) => `<button data-n="${n}" class="${SET.passLen === n ? "on" : ""}">${n}</button>`).join("")}</div></div>
+        <div class="seg" id="seg-len">${[8, 12, 20].map((n) => `<button data-n="${n}" class="${SET.passLen === n ? "on" : ""}">${n}</button>`).join("")}</div></div>
       <div class="set-row"><span class="set-body"><span class="set-t">Uppläsning</span><span class="set-d">${voiceOk ? `Röst för ${LANG.name.toLowerCase()} finns på enheten` : `Ingen röst för ${LANG.name.toLowerCase()} på den här enheten – 🔊 döljs`}</span></span>
         <button class="toggle ${SET.tts ? "on" : ""}" id="tg-tts" aria-label="Uppläsning"></button></div>
     </div>

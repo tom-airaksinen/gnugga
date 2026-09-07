@@ -55,6 +55,7 @@ test = '''<script>
     openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards");
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
     openHelp(); out.push("help: " + $$("#modal details").length + " sections"); closeModal();
+    SET.passLen = 8; save(); SET.passLen = 99; loadProgress(); out.push("settings-persist: passLen=" + SET.passLen + " (förväntat 8)");
     out.push("items=" + Object.keys(P.items).length + " days=" + JSON.stringify(P.days));
   } catch (e) { __errs.push("test: " + (e.stack || e.message)); }
   document.documentElement.setAttribute("data-test", out.join("\\n"));
