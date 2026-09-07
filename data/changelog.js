@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v2", items: [
+    { t: "Det rumänska svaret läses nu upp varje gång du svarar rätt, så att formen fastnar även i örat (kräver rumänsk röst på enheten)", type: "new" },
+    { t: "Fixat: dagens prick i veckoraden blev en stor cirkel", type: "fixed" },
+  ]},
   { date: "7 september 2026", ver: "v1", items: [
     { t: "Första versionen: rumänsk grammatik med sju mönster – bestämd form, plural, bestämd plural, presens, oregelbundna verb, perfekt och adjektivkongruens", type: "new", hi: true, ico: "🧽",
       desc: "Böjningsformerna kommer från Wiktionary (1 200 ord), så facit är riktigt. Korta regler att läsa, sedan övningar där du skriver eller säger formen själv. Fel svar ger först en ledtråd, sedan facit med förklaring." },

@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v1";
+const APP_VERSION = "v2";
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
 const byId = Object.fromEntries(PATTERNS.map((p) => [p.id, p]));
@@ -160,7 +160,7 @@ function renderHome() {
   const days = []; for (let i = 6; i >= 0; i--) days.push(addDays(today(), -i));
   const names = ["S", "M", "T", "O", "T", "F", "L"];
   const n7 = days.filter((d) => P.days[d]).length;
-  $("#week").innerHTML = `<div class="dots">${days.map((d) => `<span class="dot ${P.days[d] ? "on" : ""} ${d === today() ? "today" : ""}">${names[new Date(d + "T12:00:00").getDay()]}</span>`).join("")}</div><span>${n7 ? `${n7} av 7 dagar` : "Inga pass den här veckan än"}</span>`;
+  $("#week").innerHTML = `<div class="dots">${days.map((d) => `<span class="dot ${P.days[d] ? "on" : ""} ${d === today() ? "now" : ""}">${names[new Date(d + "T12:00:00").getDay()]}</span>`).join("")}</div><span>${n7 ? `${n7} av 7 dagar` : "Inga pass den här veckan än"}</span>`;
 
   const groups = {}; for (const p of PATTERNS) (groups[p.area] ||= []).push(p);
   $("#pattern-groups").innerHTML = Object.entries(groups).map(([area, ps]) => `<div class="group"><div class="eyebrow">${area}</div>` +
@@ -308,7 +308,7 @@ function renderValj(p, ex) {
 }
 function renderBoj(p, ex) {
   const st = $("#stage"); st.className = "stage";
-  st.innerHTML = taskHtml(ex) + `<div class="answer"><input class="inp" id="inp" type="text" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="skriv formen" />
+  st.innerHTML = taskHtml(ex) + `<div class="answer"><input class="inp" id="inp" type="text" lang="${LANG.code}" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="skriv formen" />
     <div class="keys">${LANG.keys.map((c) => `<button type="button" data-c="${c}">${c}</button>`).join("")}</div>
     <button class="cta" id="check">Kolla</button></div>`;
   const inp = $("#inp");
@@ -370,6 +370,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     bumpItem(c.p.id, c.ex.key, true, c.attempts === 1 && fast);
     logDay(true); save();
     S.log.push({ pid: c.p.id, ok: true });
+    if (!silent) speak(c.ex.say.ro); // inskärp formen med örat varje gång den sitter
     const praise = c.attempts > 1 ? "Rätt på andra försöket" : pick(["Rätt", "Precis", "Ja", "Snyggt", "Just det"]);
     const extra = c.type === "rattfel" ? `<div class="why">${c.truth ? "Formen stämde." : `Rätt form är <span class="ro">${esc(full)}</span>.`} ${c.ex.why}</div>` :
       (c.attempts > 1 || silent) ? "" : `<div class="why muted small">${c.ex.why}</div>`;
