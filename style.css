@@ -233,7 +233,9 @@ body.modal-open { position: fixed; width: 100%; overflow: hidden; }
 .cl-day { display: flex; flex-direction: column; gap: 6px; }
 .cl-day .cl-h { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); font-weight: 700; }
 .cl-item { display: flex; gap: 10px; font-size: .92rem; line-height: 1.45; }
-.cl-item .t { flex: none; font-size: .7rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); align-self: flex-start; margin-top: 2px; }
+.cl-item .t { flex: none; width: 60px; text-align: center; font-size: .7rem; font-weight: 800; padding: 3px 0; border-radius: 999px; background: var(--surface-2); color: var(--muted); align-self: flex-start; margin-top: 2px; }
+.cl-item > span:last-child { flex: 1; min-width: 0; }
+.cl-day + .cl-day { border-top: 1px solid var(--line); padding-top: 12px; }
 .cl-item .t.new { background: rgba(63,207,168,.18); color: var(--accent); }
 .cl-item .t.fixed { background: rgba(224,96,79,.18); color: #f3a89f; }
 

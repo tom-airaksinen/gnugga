@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v7", items: [
+    { t: "Vad är nytt: jämna marginaler, och flera versioner samma dag visas som en dag", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v6", items: [
     { t: "Klar-skärmen firar med samma ord som Flippa (Grymt!, Nice!, Kanon! …) i stället för \"Blankt!\"", type: "improved" },
   ]},

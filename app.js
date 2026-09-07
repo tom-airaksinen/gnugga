@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v6";
+const APP_VERSION = "v7";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -504,9 +504,15 @@ function openHelp() {
       <details><summary>Facit och källor</summary><div class="more"><p>Böjningsformerna kommer från Wiktionary (via kaikki.org), inte från en AI som gissar. Frekvensordningen kommer från undertexter (OpenSubtitles), så de vanligaste orden kommer först. Data: CC BY-SA 4.0.</p></div></details>
     </div>`);
 }
+/* Flera versioner samma dag → en post per dag med dagens senaste versionsnummer (som Flippa) */
+function mergeDays(log) {
+  const out = [];
+  for (const d of log) { const last = out[out.length - 1]; if (last && last.date === d.date) last.items.push(...d.items); else out.push({ date: d.date, ver: d.ver, items: d.items.slice() }); }
+  return out;
+}
 function openChangelog() {
   openModal(`<div class="mh"><h2>Vad är nytt</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
-    ${CHANGELOG.map((d) => `<div class="cl-day"><div class="cl-h"><span>${d.date}</span><span>${d.ver}</span></div>${d.items.map((i) => `<div class="cl-item"><span class="t ${i.type}">${{ new: "Nytt", improved: "Bättre", fixed: "Fixat" }[i.type]}</span><span>${i.t}${i.desc ? `<div class="small muted" style="margin-top:4px">${i.desc}</div>` : ""}</span></div>`).join("")}</div>`).join("")}`);
+    ${mergeDays(CHANGELOG).map((d) => `<div class="cl-day"><div class="cl-h"><span>${d.date}</span><span>${d.ver}</span></div>${d.items.map((i) => `<div class="cl-item"><span class="t ${i.type}">${{ new: "Nytt", improved: "Bättre", fixed: "Fixat" }[i.type]}</span><span>${i.t}${i.desc ? `<div class="small muted" style="margin-top:4px">${i.desc}</div>` : ""}</span></div>`).join("")}</div>`).join("")}`);
 }
 $("#version-tag").addEventListener("click", openChangelog);
 
