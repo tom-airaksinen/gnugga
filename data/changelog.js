@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v12", items: [
+    { t: "Knapparna i \"Rätt eller fel?\" är gröna respektive röda med tydliga bock- och krysstecken", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v11", items: [
     { t: "Vid uppdatering ligger startbilden kvar lite längre med texten \"Uppdaterar till …\" så man hinner se vad som händer, i stället för att flimra till", type: "improved" },
   ]},

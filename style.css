@@ -156,9 +156,13 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .opt.bad { border-color: var(--fail); background: rgba(224,96,79,.15); }
 .opt.dim { opacity: .45; }
 .tf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.tf button { border-radius: 14px; padding: 18px; font-size: 1.15rem; font-weight: 800; border: 2px solid var(--line); background: var(--surface); }
-.tf button.ok { border-color: var(--good); background: rgba(91,191,114,.15); }
-.tf button.bad { border-color: var(--fail); background: rgba(224,96,79,.15); }
+.tf button { border-radius: 14px; padding: 18px; font-size: 1.15rem; font-weight: 800; border: 2px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.tf button .ic { width: 24px; height: 24px; }
+.tf .yes { color: var(--good); border-color: rgba(91,191,114,.45); background: rgba(91,191,114,.10); }
+.tf .no { color: var(--fail); border-color: rgba(224,96,79,.45); background: rgba(224,96,79,.10); }
+.tf button.ok { border-color: var(--good); background: var(--good); color: #052b10; }
+.tf button.bad { border-color: var(--fail); background: var(--fail); color: #fff; }
+.tf button:disabled:not(.ok):not(.bad) { opacity: .4; }
 .timer { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .timer i { display: block; height: 100%; width: 100%; background: var(--warm); transform-origin: left; }
 .timer.run i { animation: shrink 4s linear forwards; }

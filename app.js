@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v11";
+const APP_VERSION = "v12";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -351,7 +351,7 @@ function renderRattfel(p, ex) {
   S.cur.truth = truth; S.cur.shown = shown;
   const ctx = ex.q.replace(/ av$/, "").replace("Sätt adjektivet i rätt form", "Adjektivform");
   st.innerHTML = `<div class="task"><div class="q">${esc(ctx)} · ${esc(plain(ex.big))} · ${esc((ex.sub || "").split("·")[0])}</div><div class="big">${esc(shown)}</div><div class="gloss">Stämmer det?</div></div>
-    <div class="answer"><div class="timer run"><i></i></div><div class="tf"><button id="tf-y">✓ Rätt</button><button id="tf-n">✗ Fel</button></div></div>`;
+    <div class="answer"><div class="timer run"><i></i></div><div class="tf"><button id="tf-y" class="yes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Rätt</button><button id="tf-n" class="no"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg> Fel</button></div></div>`;
   const answer = (said) => {
     clearTimer(); const ok = said === truth;
     $("#tf-y").disabled = $("#tf-n").disabled = true;
