@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v5";
+const APP_VERSION = "v6";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -420,13 +420,15 @@ const TIPS = [
   "Rätt på tid är det som räknas som automatiskt. Det är målet: att inte behöva tänka.",
   "Kan du regeln men fastnar på ordet? Då är det glosan som saknas – lägg in den i Flippa.",
 ];
+// Samma firande-ord som Flippa vid bra pass; lugnare rubrik annars
+const DONE_LABELS = ["Grymt!", "Nice!", "Hell yeah!", "Snyggt!", "Kanon!", "Toppen!", "Bra jobbat!", "Yes!", "Så ska det se ut!", "Mästerligt!"];
 function finish() {
   clearTimer(); hideFb();
   if (!S) return;
   const touched = [...new Set(S.log.map((l) => l.pid))];
   const acc = S.total ? Math.round(100 * S.right / S.total) : 0;
   track("pass-klar");
-  $("#done-body").innerHTML = `<div style="text-align:center;font-size:2.6rem">${acc >= 80 ? "🧽✨" : "🧽"}</div><h2>${acc >= 80 ? "Blankt!" : "Gnuggat"}</h2>
+  $("#done-body").innerHTML = `<div style="text-align:center;font-size:2.6rem">${acc >= 80 ? "🧽✨" : "🧽"}</div><h2>${acc >= 80 ? pick(DONE_LABELS) : "Gnuggat"}</h2>
     <div class="stats"><div class="stat"><b>${S.total}</b><span>övningar</span></div><div class="stat"><b>${S.right}</b><span>rätt</span></div><div class="stat"><b>${acc} %</b><span>träffsäkerhet</span></div></div>
     ${touched.length ? `<div class="eyebrow">Mönster i passet</div><div style="display:flex;flex-direction:column;gap:8px">${touched.map((pid) => { const b = S.before[pid], a = pct(pid); const d = a - b; return `<div class="delta"><div class="n">${byId[pid].name}</div>${lvlHtml(pid)}<div class="d ${d > 0 ? "up" : ""}">${d > 0 ? "+" : ""}${d} %</div></div>`; }).join("")}</div>` : ""}
     <div class="tip"><b>Grundtanke.</b> ${pick(TIPS)}</div>

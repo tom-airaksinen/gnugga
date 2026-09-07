@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 september 2026", ver: "v6", items: [
+    { t: "Klar-skärmen firar med samma ord som Flippa (Grymt!, Nice!, Kanon! …) i stället för \"Blankt!\"", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v5", items: [
     { t: "Kolla-knappen och specialtecknen försvinner när svaret är avgjort, så att bara Fortsätt är kvar. Vid \"Försök igen\" kommer de tillbaka", type: "improved" },
   ]},
