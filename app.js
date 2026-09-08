@@ -9,7 +9,9 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v18";
+const APP_VERSION = "v19";
+// AI-stjärnor (samma som Flippas "AI-kontext")
+const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -212,10 +214,11 @@ function openPattern(id) {
       ${strong.length ? `<div class="small muted" style="margin-top:6px">Sitter bra</div><div class="wordlist">${strong.map((i) => `<span class="strong">${esc(i.key)}</span>`).join("")}</div>` : ""}</div>` : "") +
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
     ${active().length > 1 ? `<button class="cta sec" id="p-mixed">Blandat pass med alla aktiva</button>` : ""}
+    <div class="links center">${aiBtn(`Förklara ${p.name.toLowerCase()} i rumänsk grammatik för en svensktalande nybörjare: regeln, de vanligaste undantagen, och fem exempel med översättning. Jämför gärna med svenskan.`, "p-ai")}</div>
     <div class="note">${s.intro ? "Blandat pass är bäst när du kan grunden. \"Bara det här\" passar när ett mönster känns nytt eller skakigt." : "Första gången: läs regeln, sedan kör du övningar på bara det här mönstret."}</div>`;
   $("#p-only").addEventListener("click", () => startSession({ focus: id }));
   const m = $("#p-mixed"); if (m) m.addEventListener("click", () => startSession({}));
-  bindSpeak($("#p-body"));
+  bindSpeak($("#p-body")); bindAi($("#p-body"));
   show("s-pattern");
 }
 
@@ -414,6 +417,21 @@ function diagnose(input, ex) {
   return null; // → mönstrets ledtråd
 }
 
+/* ---- AI-kontext: öppnar Googles AI-läge med en färdig fråga om just den här övningen
+   (som Flippa). Dynamiskt komplement till den statiska regeln. ---- */
+function aiQuestion(ex) {
+  if (ex.ai) return ex.ai;
+  const base = plain(ex.big);
+  return `${ex.q} "${base}"${ex.sub ? ` (${ex.sub})` : ""} på ${LANG.name.toLowerCase()} är "${ex.full || ex.answer}" – varför? Förklara regeln bakom, vanliga undantag, och ge tre liknande exempel.`;
+}
+function aiUrl(q) { return `https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`; }
+function openExternal(url) {
+  try { const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener noreferrer"; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(() => l.remove(), 0); }
+  catch (_) { window.open(url, "_blank"); }
+}
+const aiBtn = (q, id) => `<button class="aibtn" id="${id}" data-q="${esc(q)}">${AI_STARS} AI-kontext</button>`;
+function bindAi(root) { $$(".aibtn", root).forEach((b) => b.addEventListener("click", () => { track("ai-kontext"); openExternal(aiUrl(b.dataset.q)); })); }
+
 /* ---- Bedömning + feedback i två steg ---- */
 function grade(ok, { final, silent, timeout } = {}) {
   const c = S.cur; c.attempts++;
@@ -431,7 +449,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     const praise = c.attempts > 1 ? "Rätt på andra försöket" : pick(["Rätt", "Precis", "Ja", "Snyggt", "Just det"]);
     const extra = c.type === "rattfel" ? `<div class="why">${c.truth ? "Formen stämde." : `Rätt form är <span class="ro">${esc(full)}</span>.`} ${c.ex.why}</div>` :
       (c.attempts > 1 || silent) ? "" : `<div class="why muted small">${c.ex.why}</div>`;
-    showFb("good", `<div class="h">✓ ${praise}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${extra}<div class="acts"><button class="cta good" id="fb-next">Fortsätt</button></div>`);
+    showFb("good", `<div class="h">✓ ${praise}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${extra}<div class="links">${aiBtn(aiQuestion(c.ex), "fb-ai")}</div><div class="acts"><button class="cta good" id="fb-next">Fortsätt</button></div>`);
   } else if (!final) {
     showFb("hint", `<div class="h">Inte riktigt – en ledtråd</div><div class="why">${c.diag || c.ex.hint}</div><div class="acts"><button class="cta hint" id="fb-retry">Försök igen</button><button class="cta ghost" id="fb-giveup">Visa svaret</button></div>`);
     $("#fb-retry").addEventListener("click", () => { hideFb(); const inp = $("#inp"); if (inp) { inp.classList.remove("bad"); $("#check").classList.remove("hidden"); $(".keys").classList.remove("hidden"); inp.select(); inp.focus(); } });
@@ -445,11 +463,11 @@ function grade(ok, { final, silent, timeout } = {}) {
     S.log.push({ pid: c.p.id, ok: false });
     const head = timeout ? "Tiden gick ut" : c.type === "rattfel" ? (c.truth ? "Den var faktiskt rätt" : "Den var fel") : "Inte den här gången";
     showFb("bad", `<div class="h">✗ ${head}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${c.type === "boj" && c.lastInput && c.diag && stripDia(norm(c.lastInput)) === stripDia(norm(c.ex.answer)) ? `<div class="why muted small">Du skrev <b>${esc(c.lastInput)}</b> – bara diakriterna skilde.</div>` : ""}<div class="why">${c.ex.why}</div>
-      <div><button class="linkish" id="fb-rule">Visa hela regeln</button></div><div class="acts"><button class="cta bad" id="fb-next">Fortsätt</button></div>`);
+      <div class="links"><button class="linkish" id="fb-rule">Visa hela regeln</button>${aiBtn(aiQuestion(c.ex), "fb-ai")}</div><div class="acts"><button class="cta bad" id="fb-next">Fortsätt</button></div>`);
     $("#fb-rule").addEventListener("click", () => { $("#fb .why").innerHTML = c.p.rule; $("#fb-rule").remove(); });
   }
   $("#fb-next").addEventListener("click", next);
-  bindSpeak($("#fb"));
+  bindSpeak($("#fb")); bindAi($("#fb"));
 }
 /* Leitner per (mönster × lemma): rätt → +1 låda (+2 om snabbt första försöket), fel → låda 0 */
 function bumpItem(pid, key, ok, fast) {

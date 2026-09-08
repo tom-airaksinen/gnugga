@@ -52,7 +52,8 @@ test = '''<script>
     out.push("home: " + $("#today h2").textContent + " | rows=" + $$(".row").length + " | lvl=" + $$(".lvl").map(x=>x.textContent).join(","));
     startSession({}); await play("pass2-blandat");
     $("#done-home").click();
-    openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards");
+    openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards | ai=" + ($("#p-ai") ? $("#p-ai").dataset.q.slice(0, 60) : "SAKNAS"));
+    for (const p of PATTERNS) { const ex = p.gen(chooseLemma(p), L); out.push("ai " + p.id + ": " + aiQuestion(ex)); }
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
     renderHelp(); out.push("help: " + $$("#help-body details").length + " sections, om-rader=" + $$("#help-body .set-row").length);
     renderStats(); out.push("stats: kpi=" + $$("#stats-body .kpi").length + " heat=" + $$("#stats-body .heat .d").length + " weak=" + $$("#stats-body .wl span").length + " err=" + $$("#stats-body .flist div").length + " | " + $("#stats-body .st-hero .cap").textContent);

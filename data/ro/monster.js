@@ -245,6 +245,7 @@ const RO = (() => {
           say: { sv: `${num === "sg" ? "" : "flera "}${gl(a).split(/[,;]/)[0]} ${gl(n).split(/[,;]/)[0]}`, ro: `${nounForm} ${ans}` },
           hint: `Substantivet är <b>${GENUS[n.g]}</b>, <b>${num === "sg" ? "singular" : "plural"}</b>.${n.g === "n" ? " Neutrum: maskulint i singular, feminint i plural." : ""} Vilken av adjektivets fyra rutor är det?`,
           why: `${a.ms} har formerna ${forms.join(" · ")}. <b>${nounForm}</b> är ${fem ? "feminin" : "maskulin"} form i ${num === "sg" ? "singular" : "plural"} → ${ro(nounForm + " " + ans)}.`,
+          ai: `Varför heter det "${nounForm} ${ans}" på rumänska? Förklara hur adjektivet "${a.ms}" böjs efter substantivet "${n.w}" (${GENUS[n.g]}, ${num === "sg" ? "singular" : "plural"}), och ge tre liknande exempel.`,
           distractors: pad3(forms, [a.ms + "ă", a.ms + "i", a.ms + "e", a.ms.slice(0, -1) + "ă", a.ms.slice(0, -1) + "i"], ans), forms: adjForms(a), target: `${fem ? "feminin" : "maskulin"} ${num === "sg" ? "singular" : "plural"}`, stemHint: `Ändelsen stämmer men stammen ändras – ${a.ms} har formerna ${forms.join(" · ")}.` };
       } },
 
@@ -264,8 +265,10 @@ const RO = (() => {
         const ans = pl ? n.f.gpd : n.f.gsd;
         const base = pl ? n.f.pld : n.f.sgd;
         const cands = pl ? [n.f.pld + "r", n.f.pl + "lui", n.f.pl + "i", n.f.pld] : [n.f.sgd + "i", n.f.sgd + "lui", n.f.pl + "i", n.f.pl + "ei", n.f.sgd + "ui", n.f.pld];
-        return { q: pl ? "Genitiv-dativ plural av" : "Genitiv-dativ singular av", big: n.w, sub: `${ART[n.g]} ${n.w} · ${gl(n)} → "${pl ? gl(n).split(/[,;]/)[0] + "ens" : gl(n).split(/[,;]/)[0] + "ets"} / till ${base}"`,
-          answer: ans, say: { sv: `${pl ? "till " + gl(n).split(/[,;]/)[0] + "en (plural)" : "till " + gl(n).split(/[,;]/)[0] + "et"}`, ro: ans },
+        const svg = gl(n).split(/[,;]/)[0];
+        return { q: pl ? "Genitiv-dativ plural av" : "Genitiv-dativ singular av", big: n.w, sub: `${ART[n.g]} ${n.w} · ${svg} · ${GENUS[n.g]}`,
+          answer: ans, say: { sv: `${pl ? "till/av flera " + svg : "till/av " + svg + " (bestämd)"}`, ro: ans },
+          ai: `Varför är genitiv-dativ ${pl ? "plural" : "singular"} av "${n.w}" på rumänska "${ans}"? Förklara hur genitiv-dativ bildas för ${GENUS_PL[n.g]} substantiv, när kasuset används i vardagsspråk, och ge tre exempel i meningar.`,
           hint: pl ? `Plural får alltid <b>-lor</b>. Utgå från pluralen <b>${n.f.pl}</b>.` : n.g === "f" ? `Feminint: utgå från <b>pluralen ${n.f.pl}</b> och lägg på -i.` : `${GENUS[n.g]}: utgå från bestämd form <b>${n.f.sgd}</b> och lägg på -ui.`,
           why: pl ? `Plural i genitiv-dativ: ${n.f.pl} + -lor → ${ro(ans)}.` : gdRule(n), distractors: pad3(cands, [n.w + "ului", n.w + "ei"], ans), forms: nounForms(n), target: pl ? "genitiv-dativ plural" : "genitiv-dativ singular", stemHint: n.g === "f" && !pl ? `Utgå från pluralen <b>${n.f.pl}</b> – stammen ska vara som där.` : STEM_HINT_N };
       } },
@@ -308,6 +311,7 @@ const RO = (() => {
           answer: p.k, full, acceptFull: true, say: { sv: `${ssv} ${vsv} ${p.sv}`, ro: full },
           hint: `Objektet är <b>${p.sv}</b> – ${p.who}. Den korta ackusativformen står före verbet.`,
           why: `${p.sv} som objekt = ${ro(p.k)} (${p.who}): ${ro(full)}`,
+          ai: `Varför är det "${p.k}" i "${full}" på rumänska (${p.sv})? Förklara de obetonade ackusativpronomenen, var de står i satsen, och hur de ändras i perfekt.`,
           distractors: pad3(PRON_ACC.map((x) => x.k).concat(PRON_DAT.map((x) => x.k)), [], p.k), forms: pronForms(PRON_ACC), target: `${p.sv} i ackusativ`, stemHint: "" };
       } },
 
@@ -330,6 +334,7 @@ const RO = (() => {
           answer: p.k, full, acceptFull: true, say: { sv: svs, ro: full },
           hint: `Den som <b>får</b> något är ${p.sv} – ${p.who}. Dativformen står före verbet.`,
           why: `till ${p.sv} = ${ro(p.k)} (dativ, ${p.who}): ${ro(full)}`,
+          ai: `Varför är det "${p.k}" i "${full}" på rumänska (till ${p.sv})? Förklara de obetonade dativpronomenen, skillnaden mot ackusativ, och uttryck som "îmi place" och "mi-e foame".`,
           distractors: pad3(PRON_DAT.map((x) => x.k).concat(PRON_ACC.map((x) => x.k)), [], p.k), forms: pronForms(PRON_DAT), target: `${p.sv} i dativ`, stemHint: "" };
       } },
   );
@@ -386,6 +391,7 @@ const RO = (() => {
         return { q: "Skriv talet med substantivet", big: `${num} ${n.w}`, sub: `${ART[n.g]} ${n.w} · ${gl(n)} · ${GENUS[n.g]}`, answer: ans,
           say: { sv: `${num} ${gl(n).split(/[,;]/)[0]}`, ro: ans },
           hint: num === 1 ? `Ett är samma som obestämd artikel. Ordet är <b>${GENUS[n.g]}</b>.` : num === 2 || num === 12 ? `Två (och tolv) böjs efter genus. Ordet är <b>${GENUS[n.g]}</b>${n.g === "n" ? " – och neutrum är feminint i plural" : ""}. Och substantivet ska stå i plural: <b>${n.f.pl}</b>.` : num < 20 ? `Under 20: räkneord + plural, inget emellan. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` : `Från 20 behövs ett litet ord mellan räkneordet och pluralen (<b>${n.f.pl}</b>).${num % 10 === 1 || num % 10 === 2 ? " Slutsiffran böjs efter genus." : ""}`,
+          ai: `Varför säger man "${ans}" för ${num} ${gl(n).split(/[,;]/)[0]} på rumänska? Förklara räkneordens regler: un/o, doi/două, plural, och "de" från 20.`,
           why: numWhy(num, n), distractors: pad3(cands, [`${num} ${n.f.pl}`], ans), target: "räkneord + substantiv", stemHint: `Räkneordet stämmer – kolla substantivets form. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` };
       } },
   );
