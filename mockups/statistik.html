@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gnugga – prototyp: flikar & statistik</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1b1e; --surface:#17282c; --surface-2:#1f353a; --text:#eef4f2; --muted:#93a8a4; --accent:#3fcfa8; --accent-ink:#062b22; --warm:#f2b84b; --good:#5bbf72; --fail:#e0604f; --line:#2b444a; --track:rgba(255,255,255,.10); }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--bg); color:var(--text); font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  body { display:flex; justify-content:center; min-height:100dvh; }
+  #app { width:100%; max-width:480px; min-height:100dvh; display:flex; flex-direction:column; padding-bottom:70px; }
+  button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+  .hdr { display:flex; align-items:center; gap:10px; padding:calc(14px + env(safe-area-inset-top)) 16px 10px; }
+  .hdr h1 { font-size:1.45rem; font-weight:800; flex:1; display:flex; align-items:center; gap:8px; }
+  .logo { width:30px; height:30px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:900; font-size:16px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:.85rem; font-weight:600; }
+  .ib { width:40px; height:40px; border-radius:11px; background:var(--surface); display:grid; place-items:center; }
+  .pad { padding:4px 16px 24px; display:flex; flex-direction:column; gap:14px; }
+  .eyebrow { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .muted { color:var(--muted); } .small { font-size:.85rem; }
+  .view { display:none; flex:1; flex-direction:column; } .view.on { display:flex; }
+
+  /* Flikrad – som Flippa */
+  #tabbar { position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; justify-content:center; gap:8px; background:var(--bg); border-top:1px solid var(--line); padding-bottom:max(2px, calc(env(safe-area-inset-bottom) - 30px)); }
+  .tab-btn { display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--muted); padding:13px 22px 4px; font-size:.62rem; font-weight:600; letter-spacing:.02em; }
+  .tab-btn svg { display:block; } .tab-btn.on { color:var(--accent); }
+
+  /* Förslagsmarkering */
+  .prop { border:1px dashed rgba(242,184,75,.55); border-radius:18px; padding:12px; display:flex; flex-direction:column; gap:10px; position:relative; }
+  .prop .tag { position:absolute; top:-10px; left:12px; background:var(--warm); color:#2b1a00; font-size:.68rem; font-weight:800; padding:2px 9px; border-radius:999px; letter-spacing:.04em; }
+  .prop .why { font-size:.8rem; color:var(--warm); line-height:1.4; }
+
+  .card { background:var(--surface); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+  .card h3 { font-size:.98rem; font-weight:700; }
+
+  /* A: hero + heatmap */
+  .hero { text-align:center; padding:6px 0 2px; }
+  .hero .big { font-size:3rem; font-weight:800; line-height:1; letter-spacing:-.02em; }
+  .hero .big span { font-size:1.1rem; font-weight:600; color:var(--muted); letter-spacing:0; }
+  .hero .cap { color:var(--muted); font-size:.9rem; margin-top:4px; }
+  .week { display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--muted); }
+  .week .dots { display:flex; gap:6px; flex:1; }
+  .dot { width:24px; height:24px; border-radius:50%; background:var(--track); display:grid; place-items:center; font-size:.62rem; font-weight:700; color:var(--muted); }
+  .dot.on { background:var(--accent); color:var(--accent-ink); } .dot.now { outline:2px solid var(--accent); outline-offset:2px; }
+  .heat { display:grid; grid-template-rows:repeat(7,14px); grid-auto-flow:column; gap:3px; overflow-x:auto; padding-bottom:4px; }
+  .d { width:14px; height:14px; border-radius:4px; background:var(--surface-2); }
+  .d.l1 { background:rgba(63,207,168,.30);} .d.l2 { background:rgba(63,207,168,.55);} .d.l3 { background:rgba(63,207,168,.8);} .d.l4 { background:var(--accent);} .d.now { box-shadow:0 0 0 2px var(--warm); }
+  .legend { display:flex; align-items:center; gap:5px; font-size:.75rem; color:var(--muted); justify-content:flex-end; } .legend .d { width:11px; height:11px; }
+
+  /* B: period + KPI */
+  .seg { display:flex; background:var(--surface-2); border-radius:12px; padding:3px; gap:3px; }
+  .seg button { flex:1; padding:8px; border-radius:9px; font-size:.85rem; font-weight:700; color:var(--muted); }
+  .seg button.on { background:var(--accent); color:var(--accent-ink); }
+  .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .kpi { background:var(--surface); border-radius:14px; padding:12px 14px; }
+  .kpi b { display:block; font-size:1.7rem; font-variant-numeric:tabular-nums; line-height:1.1; } .kpi span { font-size:.78rem; color:var(--muted); }
+  .kpi .delta { font-size:.75rem; color:var(--accent); font-weight:700; margin-left:6px; }
+
+  /* C: mönster */
+  .prow { display:flex; align-items:center; gap:10px; }
+  .prow .n { flex:1; min-width:0; font-size:.92rem; }
+  .prow .bar { flex:1.4; height:10px; border-radius:999px; background:var(--track); overflow:hidden; display:flex; }
+  .prow .bar i { display:block; height:100%; }
+  .prow .bar .acc { background:var(--accent); } .prow .bar .fast { background:#7ee6c9; opacity:.55; }
+  .lvl { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--surface-2); color:var(--muted); white-space:nowrap; min-width:78px; text-align:center; }
+  .lvl.l1 { color:var(--text);} .lvl.l2 { background:rgba(63,207,168,.18); color:var(--accent);} .lvl.l3 { background:var(--accent); color:var(--accent-ink);}
+
+  /* D: Leitner */
+  .lt { display:flex; align-items:flex-end; gap:6px; height:110px; padding-top:6px; }
+  .lt div { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; font-size:.7rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .lt i { display:block; width:72%; border-radius:5px 5px 0 0; }
+  .b0 { background:#e0604f;} .b1 { background:#e0915a;} .b2 { background:#f2b84b;} .b3 { background:#8fbf5a;} .b4 { background:#5bbf72;} .b5 { background:#3fcfa8;} .b6 { background:#9b6dff;}
+
+  /* E: svaga ord */
+  .wl { display:flex; flex-wrap:wrap; gap:6px; }
+  .wl span { font-size:.85rem; background:rgba(224,96,79,.16); color:#f3a89f; border-radius:999px; padding:4px 10px; }
+  .wl span em { font-style:normal; color:var(--muted); font-size:.72rem; margin-left:5px; }
+  .cta { background:var(--accent); color:var(--accent-ink); font-weight:800; border-radius:12px; padding:12px; width:100%; }
+  .cta.sec { background:var(--surface-2); color:var(--text); font-weight:700; }
+
+  /* F: feltyper */
+  .stack { display:flex; height:14px; border-radius:999px; overflow:hidden; }
+  .stack i { display:block; height:100%; }
+  .flist { display:flex; flex-direction:column; gap:6px; font-size:.9rem; }
+  .flist div { display:flex; align-items:center; gap:8px; } .flist .sw { width:12px; height:12px; border-radius:3px; } .flist b { margin-left:auto; font-variant-numeric:tabular-nums; }
+
+  /* G: trend */
+  svg.spark { width:100%; height:110px; display:block; }
+
+  /* Hjälp */
+  .help details { background:var(--surface-2); border-radius:14px; padding:12px 14px; }
+  .help details + details { margin-top:8px; }
+  .help summary { cursor:pointer; font-weight:700; list-style:none; display:flex; justify-content:space-between; }
+  .help summary::after { content:"＋"; color:var(--muted); } .help details[open] summary::after { content:"－"; }
+  .help .more { margin-top:8px; font-size:.92rem; color:var(--text); }
+  .set-row { display:flex; align-items:center; gap:12px; background:var(--surface-2); border-radius:14px; padding:12px 14px; width:100%; text-align:left; }
+  .set-row .set-body { flex:1; display:flex; flex-direction:column; } .set-t { font-weight:600; } .set-d { font-size:.82rem; color:var(--muted); }
+  .chev { color:var(--muted); }
+  .note { font-size:.85rem; color:var(--muted); text-align:center; padding:0 10px; }
+  .intro { background:rgba(242,184,75,.10); border:1px solid rgba(242,184,75,.35); border-radius:14px; padding:12px 14px; font-size:.9rem; line-height:1.5; }
+  .intro b { color:var(--warm); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== FLIK: GNUGGA (bara skal) ===== -->
+  <section class="view" id="v-gnugga">
+    <header class="hdr"><h1><span class="logo">G</span> Gnugga</h1><span class="chip">🇷🇴 Rumänska</span><span class="ib">⚙︎</span></header>
+    <div class="pad">
+      <div class="intro"><b>Prototyp.</b> Det här är hemskärmen som den är i dag, oförändrad, men med flikraden längst ner. Tryck <b>Statistik</b> för att se sju förslag, och <b>Hjälp</b> för nya hemmet för hjälp, Vad är nytt och Om.</div>
+      <div class="card"><div class="eyebrow">Dagens gnugg</div><h3 style="font-size:1.2rem">Blandad repetition</h3><div class="muted small">12 övningar · 4 mönster att blanda · 9 förfallna</div><button class="cta">Gnugga nu · ca 3 min</button></div>
+      <div class="eyebrow">Mönster</div>
+      <div class="card" style="gap:6px"><div class="muted small">… mönsterlistan som nu …</div></div>
+    </div>
+  </section>
+
+  <!-- ===== FLIK: STATISTIK ===== -->
+  <section class="view on" id="v-stats">
+    <header class="hdr"><h1>Statistik</h1><span class="chip">🇷🇴 Rumänska</span></header>
+    <div class="pad">
+      <div class="intro"><b>Sju förslag, A–G.</b> Allt är fejkade siffror. Tanken är att du väljer vilka block som ska in och i vilken ordning. Gult streck = förslagsram, försvinner i riktiga appen. Min rekommendation står under varje block.</div>
+
+      <!-- A -->
+      <div class="prop"><span class="tag">A · Vecka & heatmap</span>
+        <div class="hero"><div class="big">4<span> av 7 dagar</span></div><div class="cap">den här veckan · 23 gnuggdagar totalt · längsta svit 9</div></div>
+        <div class="week"><div class="dots"><span class="dot on">T</span><span class="dot">O</span><span class="dot on">T</span><span class="dot on">F</span><span class="dot">L</span><span class="dot on">S</span><span class="dot now">M</span></div></div>
+        <div class="eyebrow">Senaste 18 veckorna</div>
+        <div class="heat" id="heat"></div>
+        <div class="legend">mindre <span class="d"></span><span class="d l1"></span><span class="d l2"></span><span class="d l3"></span><span class="d l4"></span> mer</div>
+        <div class="why">Rekommenderas. Samma som Flippa men med "dagar av 7" i stället för streak-siffra: förlåtande, i linje med forskningen om streak-ångest. Heatmapen är bekant och motiverande.</div>
+      </div>
+
+      <!-- B -->
+      <div class="prop"><span class="tag">B · Period & KPI</span>
+        <div class="seg"><button>Vecka</button><button class="on">Månad</button><button>Allt</button></div>
+        <div class="kpis">
+          <div class="kpi"><b>19</b><span>pass</span></div>
+          <div class="kpi"><b>231</b><span>övningar</span></div>
+          <div class="kpi"><b>78 %<span class="delta">+5</span></b><span>träffsäkerhet</span></div>
+          <div class="kpi"><b>41 %</b><span>rätt på tid</span></div>
+        </div>
+        <div class="why">Rekommenderas. "Rätt på tid" är Gnuggas egen siffra – andelen svar som var både rätt och snabba. Det är måttet på automatisering, och det bör synas växa. Deltan jämför med föregående period.</div>
+      </div>
+
+      <!-- C -->
+      <div class="prop"><span class="tag">C · Mönstren</span>
+        <div class="card" style="gap:9px">
+          <div class="prow"><div class="n">Bestämd form singular</div><div class="bar"><i class="acc" style="width:62%"></i><i class="fast" style="width:24%"></i></div><span class="lvl l2">Övat</span></div>
+          <div class="prow"><div class="n">Plural obestämd</div><div class="bar"><i class="acc" style="width:48%"></i><i class="fast" style="width:12%"></i></div><span class="lvl l2">Övat</span></div>
+          <div class="prow"><div class="n">Presens</div><div class="bar"><i class="acc" style="width:35%"></i><i class="fast" style="width:6%"></i></div><span class="lvl l1">Lärt</span></div>
+          <div class="prow"><div class="n">Adjektivet följer med</div><div class="bar"><i class="acc" style="width:20%"></i></div><span class="lvl l1">Lärt</span></div>
+          <div class="prow"><div class="n">Ackusativ</div><div class="bar"><i class="acc" style="width:8%"></i></div><span class="lvl l1">Lärt</span></div>
+          <div class="muted small">Mörk stapel = andel rätt · ljus = andel rätt på tid. Sorterat svagast först.</div>
+        </div>
+        <div class="why">Tveksamt som eget block: hemskärmen visar redan nivå per mönster. Värdet här är "rätt på tid"-stapeln och sorteringen svagast först. Kan slås ihop med hemskärmens lista i stället.</div>
+      </div>
+
+      <!-- D -->
+      <div class="prop"><span class="tag">D · Leitner-lådor</span>
+        <div class="card"><h3>Lådor · 184 ord × mönster</h3>
+          <div class="lt">
+            <div><i class="b0" style="height:38%"></i>31<small>låda 0</small></div><div><i class="b1" style="height:55%"></i>46<small>1</small></div><div><i class="b2" style="height:44%"></i>37<small>2</small></div><div><i class="b3" style="height:30%"></i>25<small>4 d</small></div><div><i class="b4" style="height:22%"></i>18<small>8 d</small></div><div><i class="b5" style="height:18%"></i>15<small>16 d</small></div><div><i class="b6" style="height:14%"></i>12<small>32 d</small></div>
+          </div>
+          <div class="muted small">Varje ord i varje mönster har en egen låda. Rött till vänster = kommer snart igen, lila till höger = sitter.</div>
+        </div>
+        <div class="why">Rekommenderas för dig som gillar Flippas variant – samma mentala modell. Mindre viktig för andra användare; kan ligga längst ner.</div>
+      </div>
+
+      <!-- E -->
+      <div class="prop"><span class="tag">E · Svagaste orden</span>
+        <div class="card"><h3>Fastnar oftast</h3>
+          <div class="wl"><span>mână<em>bestämd</em></span><span>fată<em>plural</em></span><span>a putea<em>presens</em></span><span>ou<em>plural</em></span><span>carte<em>gen-dat</em></span><span>a lua<em>presens</em></span><span>frumos<em>adjektiv</em></span><span>îi<em>dativ</em></span></div>
+          <button class="cta sec">Gnugga just dessa · 8 övningar</button>
+        </div>
+        <div class="why">Rekommenderas starkt. Statistik som leder till handling: ett pass på bara de svagaste. Det är också ett bra ställe att upptäcka att det är glosan, inte grammatiken, som saknas – då hör ordet hemma i Flippa.</div>
+      </div>
+
+      <!-- F -->
+      <div class="prop"><span class="tag">F · Vad du gör fel</span>
+        <div class="card"><h3>Feltyper senaste månaden</h3>
+          <div class="stack"><i style="width:38%;background:var(--warm)"></i><i style="width:27%;background:var(--fail)"></i><i style="width:20%;background:#9b6dff"></i><i style="width:15%;background:#5b8cff"></i></div>
+          <div class="flist">
+            <div><span class="sw" style="background:var(--warm)"></span>Bara krumelurerna (ă â î ș ț)<b>38 %</b></div>
+            <div><span class="sw" style="background:var(--fail)"></span>Fel ändelse<b>27 %</b></div>
+            <div><span class="sw" style="background:#9b6dff"></span>Rätt ändelse, fel stam (vokalväxling)<b>20 %</b></div>
+            <div><span class="sw" style="background:#5b8cff"></span>Riktig form men fel form (t.ex. plural i stället för bestämd)<b>15 %</b></div>
+          </div>
+          <div class="muted small">Byggs på feldiagnosen som redan körs vid varje fel svar.</div>
+        </div>
+        <div class="why">Ny och unik för Gnugga. Säger något ingen annan app säger: "38 % av dina fel är diakriter – det är inte grammatiken, det är tangentbordet." Kräver att vi börjar logga diagnoskategorin per fel, vilket är en rad kod.</div>
+      </div>
+
+      <!-- G -->
+      <div class="prop"><span class="tag">G · Trend</span>
+        <div class="card"><h3>Träffsäkerhet & rätt på tid, per vecka</h3>
+          <svg class="spark" viewBox="0 0 320 110" preserveAspectRatio="none">
+            <line x1="0" y1="30" x2="320" y2="30" stroke="rgba(255,255,255,.08)"/><line x1="0" y1="60" x2="320" y2="60" stroke="rgba(255,255,255,.08)"/><line x1="0" y1="90" x2="320" y2="90" stroke="rgba(255,255,255,.08)"/>
+            <path d="M10 70 L55 62 L100 66 L145 50 L190 44 L235 38 L280 30 L310 26" fill="none" stroke="#3fcfa8" stroke-width="3" stroke-linecap="round"/>
+            <path d="M10 98 L55 96 L100 92 L145 86 L190 80 L235 70 L280 62 L310 56" fill="none" stroke="#7ee6c9" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 5"/>
+            <circle cx="310" cy="26" r="4" fill="#3fcfa8"/><circle cx="310" cy="56" r="4" fill="#7ee6c9"/>
+            <text x="8" y="14" fill="#93a8a4" font-size="10">v.37</text><text x="290" y="14" fill="#93a8a4" font-size="10">v.44</text>
+          </svg>
+          <div class="muted small"><span style="color:var(--accent)">━</span> träffsäkerhet 84 % · <span style="color:#7ee6c9">╍</span> rätt på tid 49 %</div>
+        </div>
+        <div class="why">Trevligt men först meningsfullt efter 4–6 veckor data. Kan vänta till v2; till resan finns bara sju veckor.</div>
+      </div>
+
+      <div class="note">Mitt förslag på v1: A + B + E överst, D längst ner. F när loggningen finns. C och G väntar.</div>
+    </div>
+  </section>
+
+  <!-- ===== FLIK: HJÄLP ===== -->
+  <section class="view" id="v-help">
+    <header class="hdr"><h1>Hjälp</h1></header>
+    <div class="pad">
+      <div class="intro"><b>Hjälp-fliken</b> tar över grundtankarna från dagens hjälpmodal och får dessutom Om-delen från Inställningar (Vad är nytt, Innehåll & källor, version). Inställningar behåller bara det man ställer in: passlängd, uppläsning, framsteg.</div>
+      <div class="help">
+        <details open><summary>Vad Gnugga är</summary><div class="more">Ett komplement till Flippa. Flippa nöter ord; Gnugga nöter formerna: bestämd form, plural, verbböjning, adjektiv som ska stämma.</div></details>
+        <details><summary>Ett pass</summary><div class="more">…</div></details>
+        <details><summary>Fel svar</summary><div class="more">…</div></details>
+        <details><summary>Varför det blandas</summary><div class="more">…</div></details>
+        <details><summary>Nivåerna</summary><div class="more">…</div></details>
+        <details><summary>Läsa eller göra?</summary><div class="more">…</div></details>
+      </div>
+      <div class="eyebrow">Om appen</div>
+      <button class="set-row"><span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Gnugga v16 · senast 8 september 2026</span></span><span class="chev">›</span></button>
+      <button class="set-row"><span class="set-body"><span class="set-t">Innehåll & källor</span><span class="set-d">700 substantiv · 300 verb · 220 adjektiv. Böjningsformer från Wiktionary via kaikki.org, CC BY-SA 4.0</span></span><span class="chev">›</span></button>
+      <button class="set-row"><span class="set-body"><span class="set-t">Grundtankarna bakom Gnugga</span><span class="set-d">Vad forskningen säger och hur appen följer det</span></span><span class="chev">›</span></button>
+      <div class="note">Gnugga v16</div>
+    </div>
+  </section>
+
+  <nav id="tabbar">
+    <button class="tab-btn" data-v="v-gnugga"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="10" rx="3"/><path d="M4 12h16"/><path d="M8 5q2-2 4 0t4 0"/></svg><span>Gnugga</span></button>
+    <button class="tab-btn on" data-v="v-stats"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg><span>Statistik</span></button>
+    <button class="tab-btn" data-v="v-help"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg><span>Hjälp</span></button>
+  </nav>
+</div>
+<script>
+  document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((x) => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === b.dataset.v));
+    window.scrollTo(0, 0);
+  }));
+  // Heatmap 18 veckor × 7 dagar, fejkat mönster
+  const heat = document.getElementById("heat"); let seed = 7;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 126; i++) { const d = document.createElement("span"); const r = rnd(); const recent = i > 90;
+    d.className = "d " + (i < 40 ? "" : r < .35 ? "" : r < .55 ? "l1" : r < .75 ? "l2" : r < .9 ? "l3" : "l4") + (recent && r < .3 ? " l1" : "") + (i === 125 ? " now" : ""); heat.appendChild(d); }
+</script>
+</body>
+</html>
