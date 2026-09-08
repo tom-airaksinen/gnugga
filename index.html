@@ -62,6 +62,18 @@
       <div id="fb" class="fb"></div>
     </section>
 
+    <!-- ===== STATISTIK (flik) ===== -->
+    <section id="s-stats" class="screen">
+      <header class="hdr"><h1>Statistik</h1><span class="chip" id="stats-lang"></span></header>
+      <div class="pad" id="stats-body"></div>
+    </section>
+
+    <!-- ===== HJÄLP (flik) ===== -->
+    <section id="s-help" class="screen">
+      <header class="hdr"><h1>Hjälp</h1></header>
+      <div class="pad" id="help-body"></div>
+    </section>
+
     <!-- ===== KLAR ===== -->
     <section id="s-done" class="screen">
       <canvas id="done-canvas" aria-hidden="true"></canvas>
@@ -69,7 +81,14 @@
     </section>
   </div>
 
-  <!-- Modaler (inställningar, hjälp, vad är nytt) -->
+  <!-- Flikrad – som Flippa. Syns på hem, statistik och hjälp; döljs under pass -->
+  <nav id="tabbar">
+    <button class="tab-btn on" data-tab="s-home" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="16" height="10" rx="3"/><path d="M4 12h16"/><path d="M8 5q2-2 4 0t4 0"/></svg><span>Gnugga</span></button>
+    <button class="tab-btn" data-tab="s-stats" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg><span>Statistik</span></button>
+    <button class="tab-btn" data-tab="s-help" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg><span>Hjälp</span></button>
+  </nav>
+
+  <!-- Modaler (inställningar, vad är nytt) -->
   <div id="modal-root" class="modal-root hidden">
     <div class="modal-back" id="modal-back"></div>
     <div class="modal" id="modal" role="dialog" aria-modal="true"></div>

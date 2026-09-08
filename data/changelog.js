@@ -9,6 +9,12 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "8 september 2026", ver: "v17", items: [
+    { t: "Tre flikar längst ner som i Flippa: Gnugga, Statistik och Hjälp", type: "new", hi: true, ico: "📊",
+      desc: "Statistik visar dagar den här veckan och en heatmap över 18 veckor, pass/övningar/träffsäkerhet/rätt på tid per vecka, månad eller allt, de ord som fastnar oftast med en knapp för att gnugga just dem – och vad du faktiskt gör fel: krumelurer, ändelse, stam eller fel form." },
+    { t: "Hjälp har blivit en egen flik, och Vad är nytt samt Innehåll & källor har flyttat dit från Inställningar", type: "improved" },
+    { t: "Appen loggar nu feltyp vid varje fel svar i Böj-övningar (grunden för \"Vad du gör fel\")", type: "new" },
+  ]},
   { date: "8 september 2026", ver: "v16", items: [
     { t: "Tre nya mönster: objektspronomen (mă, te, îl, o…), dativpronomen (îmi, îți, îi…) och räkneord med substantiv (două fete, trei case, douăzeci de trenuri)", type: "new", hi: true, ico: "🔢",
       desc: "Pronomenen övas i korta meningar med lucka – 'Maria ___ vede (mig)' – eftersom rätt form beror på rollen i satsen. Räkneorden tränar det som kräver en regel: genus på 2 och 12, plural från 3 och 'de' från 20. Själva siffrorna 1–10 lär du bäst i Flippa." },

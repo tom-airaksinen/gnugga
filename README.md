@@ -48,7 +48,8 @@ frekvens i undertexter. Svenska glosor för alla.
 | App-kod | `index.html`, `style.css`, `app.js` (språkoberoende motor), `sw.js`, `manifest.json` |
 | Språk | `data/ro/monster.js` (regler, exempel, generatorer, ledtrådar) + `data/ro/lexikon.json` (böjningsformer) |
 | Progress | localStorage per enhet: Leitner-låda per (mönster × ord), nivå per mönster, dagar. Export/import som JSON i Inställningar |
-| Changelog | `data/changelog.js`, visas under Inställningar → Vad är nytt |
+| Flikar | Gnugga (hem + pass) · Statistik (vecka & heatmap, KPI per period, svagaste orden, feltyper) · Hjälp (grundtankar, Vad är nytt, källor) |
+| Changelog | `data/changelog.js`, visas under Hjälp → Vad är nytt |
 
 Ingen backend, ingen inloggning, ingen Firebase: innehållet är kurerat och versionshanterat här.
 

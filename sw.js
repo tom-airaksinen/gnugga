@@ -1,6 +1,6 @@
 // Gnugga – service worker. Samma mönster som Flippa: allt cachas vid install,
 // cache-namnet bumpas per version så installerade PWA:er hämtar nytt.
-const CACHE = "gnugga-v16";
+const CACHE = "gnugga-v17";
 const ASSETS = [
   "./",
   "./index.html",

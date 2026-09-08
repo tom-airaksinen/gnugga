@@ -54,7 +54,10 @@ test = '''<script>
     $("#done-home").click();
     openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards");
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
-    openHelp(); out.push("help: " + $$("#modal details").length + " sections"); closeModal();
+    renderHelp(); out.push("help: " + $$("#help-body details").length + " sections, om-rader=" + $$("#help-body .set-row").length);
+    renderStats(); out.push("stats: kpi=" + $$("#stats-body .kpi").length + " heat=" + $$("#stats-body .heat .d").length + " weak=" + $$("#stats-body .wl span").length + " err=" + $$("#stats-body .flist div").length + " | " + $("#stats-body .st-hero .cap").textContent);
+    statsPeriod = "week"; renderStats(); out.push("stats week: " + $$("#stats-body .kpi b").map(x=>x.textContent).join(" / "));
+    const wb = $("#st-weak"); if (wb) { wb.click(); await play("pass3-plock"); $("#done-home").click(); } else out.push("pass3-plock: inga svaga ord");
     const dx = (i, ex) => (diagnose(i, ex) || "PATTERN-HINT").replace(/<[^>]+>/g, "");
     const exN = { answer: "mâna", hint: "H", forms: { "mână": "grundformen", "mâna": "bestämd singular", "mâini": "obestämd plural" }, target: "bestämd singular", stemHint: "STEM" };
     out.push("diag dia: " + dx("mana", exN)); out.push("diag form: " + dx("mâini", exN)); out.push("diag typo: " + dx("mânz", exN)); out.push("diag ending: " + dx("mânăul", exN));

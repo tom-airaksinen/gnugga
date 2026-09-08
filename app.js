@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v16";
+const APP_VERSION = "v17";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -103,7 +103,18 @@ function dueCount() {
    Skärmar & hjälp
    ============================================================ */
 let activeScreen = "s-home";
-function show(id) { $$(".screen").forEach((s) => s.classList.toggle("on", s.id === id)); activeScreen = id; window.scrollTo(0, 0); maybeReloadForUpdate(); }
+const TABS = ["s-home", "s-stats", "s-help"];
+function show(id) {
+  $$(".screen").forEach((s) => s.classList.toggle("on", s.id === id)); activeScreen = id; window.scrollTo(0, 0);
+  document.body.classList.toggle("tabbar-on", TABS.includes(id));
+  $$(".tab-btn").forEach((b) => b.classList.toggle("on", b.dataset.tab === id));
+  maybeReloadForUpdate();
+}
+$$(".tab-btn").forEach((b) => b.addEventListener("click", () => {
+  const id = b.dataset.tab;
+  if (id === "s-home") renderHome(); else if (id === "s-stats") renderStats(); else renderHelp();
+  show(id);
+}));
 $$("[data-go]").forEach((b) => b.addEventListener("click", () => { if (b.dataset.go === "s-home") renderHome(); show(b.dataset.go); }));
 
 let toastT = null;
@@ -170,7 +181,7 @@ function renderHome() {
     ps.map((p) => `<button class="row" data-p="${p.id}"><div class="body"><div class="name">${p.name}</div><div class="bar"><i style="width:${pct(p.id)}%"></i></div></div>${nn && nn.id === p.id ? `<span class="lvl due">Nästa</span>` : lvlHtml(p.id)}<span class="chev">›</span></button>`).join("") + `</div>`).join("");
   $$(".row[data-p]").forEach((b) => b.addEventListener("click", () => openPattern(b.dataset.p)));
   $("#lang-chip").textContent = `${LANG.flag} ${LANG.name}`;
-  $("#version-tag").textContent = `Gnugga ${APP_VERSION} · Vad är nytt`;
+  $("#version-tag").textContent = `Gnugga ${APP_VERSION}`;
 }
 /* Nytt mönster introduceras när inget introducerats idag och de aktiva har åtminstone lite på fötterna */
 function canIntroduce() {
@@ -216,9 +227,14 @@ function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
 
 /* Passplan: lista av {pid,type} eller {intro:pid}.
    Typer: valj (igenkänning, bara intro), boj (skriv), sag (muntligt), rattfel (tidspressat) */
-function planSession({ focus }) {
+function planSession({ focus, picks }) {
   const items = []; const add = (pid, type) => items.push({ pid, type });
   const n = SET.passLen;
+  if (picks && picks.length) { // "Gnugga just dessa": bara Böj på utvalda ord, två varv om få
+    const list = picks.length < 6 ? picks.concat(picks) : picks;
+    for (const pk of shuffle(list)) items.push({ pid: pk.pid, type: "boj", key: pk.key });
+    return items;
+  }
   if (focus) {
     const isNew = !P.pat[focus].intro;
     const cnt = Math.min(n, 12);
@@ -262,7 +278,7 @@ function planSession({ focus }) {
   return items;
 }
 function startSession(opts) {
-  S = { items: planSession(opts), i: -1, right: 0, total: 0, before: {}, log: [], focus: opts.focus || null };
+  S = { items: planSession(opts), i: -1, right: 0, total: 0, before: {}, log: [], focus: opts.focus || null, picks: !!opts.picks };
   for (const p of PATTERNS) S.before[p.id] = pct(p.id);
   track("pass-start");
   show("s-session"); next();
@@ -278,7 +294,7 @@ function next() {
   $("#prog-i").style.width = (100 * done / n) + "%"; $("#counter").textContent = `${done}/${n}`;
   if (it.intro) return renderIntro(byId[it.intro]);
   const p = byId[it.pid];
-  const lemma = chooseLemma(p);
+  const lemma = (it.key && p.pool(L).find((x) => p.key(x) === it.key)) || chooseLemma(p);
   const ex = p.gen(lemma, L);
   ex.key = p.key(lemma);
   S.cur = { p, ex, type: it.type, attempts: 0, t0: performance.now() };
@@ -321,7 +337,7 @@ function renderBoj(p, ex) {
     const accepted = [ex.answer, ...(ex.alts || []), ...(ex.acceptFull && ex.full ? [ex.full] : [])].map(norm);
     const ok = accepted.includes(v);
     inp.classList.remove("ok", "bad"); inp.classList.add(ok ? "ok" : "bad");
-    S.cur.diag = ok ? null : diagnose(v, ex); S.cur.lastInput = v;
+    S.cur.diag = ok ? null : diagnose(v, ex); S.cur.lastInput = v; if (!ok && !S.cur.diagCat) S.cur.diagCat = lastDiagCat;
     inp.blur();
     $("#check").classList.add("hidden"); $(".keys").classList.add("hidden");
     grade(ok, { final: ok || S.cur.attempts >= 1 });
@@ -376,20 +392,24 @@ function lev(a, b) {
 function markDiff(input, answer) { // markera tecken i inmatningen som skiljer sig (utan att visa facit)
   return Array.from(input).map((ch, i) => ch === answer[i] ? esc(ch) : `<mark>${esc(ch)}</mark>`).join("");
 }
+let lastDiagCat = null; // sätts av diagnose(), läses av renderBoj
 function diagnose(input, ex) {
   const ans = norm(ex.answer); const inp = norm(input);
+  lastDiagCat = "ending";
   if (!inp || inp === ans) return null;
   if (ex.forms && ex.forms[inp] && ex.forms[inp] !== ex.forms[ans]) {
+    lastDiagCat = "form";
     return `<b>${esc(inp)}</b> är en riktig form av ordet – men det är <b>${ex.forms[inp]}</b>. Här ska det vara ${ex.target || "en annan form"}.`;
   }
   if (stripDia(inp) === stripDia(ans)) {
+    lastDiagCat = "dia";
     const pos = inp.length === ans.length ? markDiff(inp, ans) : esc(inp);
     return `Nästan! Bokstäverna är rätt – det är bara krumelurerna. Kolla det markerade: ${pos}. Använd knapparna ă â î ș ț.`;
   }
   const tail = Math.min(2, ans.length - 1);
   const sameEnding = tail > 0 && inp.endsWith(ans.slice(-tail));
   if (lev(inp, ans) === 1 && !sameEnding) return `Ett tecken ifrån – ser ut som en felskrivning eller fel ändelse. Kolla slutet: ${markDiff(inp, ans)}.`;
-  if (sameEnding && ex.stemHint) return `Ändelsen <b>-${esc(ans.slice(-tail))}</b> stämmer. ${ex.stemHint}`;
+  if (sameEnding && ex.stemHint) { lastDiagCat = "stem"; return `Ändelsen <b>-${esc(ans.slice(-tail))}</b> stämmer. ${ex.stemHint}`; }
   if (lev(inp, ans) === 1) return `Ett tecken ifrån: ${markDiff(inp, ans)}. ${ex.hint}`;
   return null; // → mönstrets ledtråd
 }
@@ -405,7 +425,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     const fast = c.type === "rattfel" || (c.type === "boj" && ms < 7000 && c.attempts === 1);
     if (fast) s.fast++;
     bumpItem(c.p.id, c.ex.key, true, c.attempts === 1 && fast);
-    logDay(true); save();
+    logDay(true, fast); save();
     S.log.push({ pid: c.p.id, ok: true });
     if (!silent) speak(c.ex.say.ro); // inskärp formen med örat varje gång den sitter
     const praise = c.attempts > 1 ? "Rätt på andra försöket" : pick(["Rätt", "Precis", "Ja", "Snyggt", "Just det"]);
@@ -421,7 +441,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     S.total++;
     const s = P.pat[c.p.id]; s.seen++; s.last = today(); touchDay(s);
     bumpItem(c.p.id, c.ex.key, false, false);
-    logDay(false); save();
+    logDay(false); if (c.type === "boj") logErr(c.diagCat || "ending"); save();
     S.log.push({ pid: c.p.id, ok: false });
     const head = timeout ? "Tiden gick ut" : c.type === "rattfel" ? (c.truth ? "Den var faktiskt rätt" : "Den var fel") : "Inte den här gången";
     showFb("bad", `<div class="h">✗ ${head}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${c.type === "boj" && c.lastInput && c.diag && stripDia(norm(c.lastInput)) === stripDia(norm(c.ex.answer)) ? `<div class="why muted small">Du skrev <b>${esc(c.lastInput)}</b> – bara diakriterna skilde.</div>` : ""}<div class="why">${c.ex.why}</div>
@@ -442,7 +462,10 @@ function bumpItem(pid, key, ok, fast) {
   P.items[k] = it;
 }
 function touchDay(s) { s.dayList = s.dayList || []; if (!s.dayList.includes(today())) { s.dayList.push(today()); if (s.dayList.length > 60) s.dayList.shift(); } }
-function logDay(ok) { const d = P.days[today()] || { n: 0, right: 0 }; d.n++; if (ok) d.right++; P.days[today()] = d; }
+function logDay(ok, fast) { const d = P.days[today()] || { n: 0, right: 0 }; d.n++; if (ok) d.right++; if (fast) d.fast = (d.fast || 0) + 1; P.days[today()] = d; }
+/* Feltyper (för statistiken): dia = bara diakriter, form = riktig form men fel form,
+   stem = rätt ändelse fel stam, ending = fel ändelse / övrigt */
+function logErr(cat) { if (!cat) return; P.errs = P.errs || {}; const d = P.errs[today()] || {}; d[cat] = (d[cat] || 0) + 1; P.errs[today()] = d; }
 function showFb(kind, html) { const fb = $("#fb"); fb.className = `fb show ${kind}`; fb.innerHTML = html; }
 function hideFb() { const fb = $("#fb"); fb.className = "fb"; fb.innerHTML = ""; }
 
@@ -462,6 +485,7 @@ function finish() {
   if (!S) return;
   const touched = [...new Set(S.log.map((l) => l.pid))];
   const acc = S.total ? Math.round(100 * S.right / S.total) : 0;
+  if (S.total) { const d = P.days[today()] || { n: 0, right: 0 }; d.pass = (d.pass || 0) + 1; P.days[today()] = d; save(); }
   track("pass-klar");
   $("#done-body").innerHTML = `<div style="text-align:center;font-size:2.6rem">${acc >= 80 ? "🧽✨" : "🧽"}</div><h2>${acc >= 80 ? pick(DONE_LABELS) : "Gnuggat"}</h2>
     <div class="stats"><div class="stat"><b>${S.total}</b><span>övningar</span></div><div class="stat"><b>${S.right}</b><span>rätt</span></div><div class="stat"><b>${acc} %</b><span>träffsäkerhet</span></div></div>
@@ -543,12 +567,6 @@ function openSettings() {
       <div class="set-row"><span class="set-body"><span class="set-t">Uppläsning</span><span class="set-d">${voiceOk ? `Röst för ${LANG.name.toLowerCase()} finns på enheten` : `Ingen röst för ${LANG.name.toLowerCase()} på den här enheten – 🔊 döljs`}</span></span>
         <button class="toggle ${SET.tts ? "on" : ""}" id="tg-tts" aria-label="Uppläsning"></button></div>
     </div>
-    <div class="eyebrow">Om appen</div>
-    <div class="set">
-      <button class="set-row" id="open-help"><span class="set-body"><span class="set-t">Hjälp & grundtankar</span><span class="set-d">Hur Gnugga är tänkt att användas – och varför</span></span><span class="chev">›</span></button>
-      <button class="set-row" id="open-cl"><span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Gnugga ${APP_VERSION}</span></span><span class="chev">›</span></button>
-      <div class="set-row"><span class="set-body"><span class="set-t">Innehåll</span><span class="set-d">${L.nouns.length} substantiv · ${L.verbs.length} verb · ${L.adjs.length} adjektiv. Böjningsformer från Wiktionary via kaikki.org, CC BY-SA 4.0. Frekvens: OpenSubtitles.</span></span></div>
-    </div>
     <div class="eyebrow">Dina framsteg</div>
     <div class="set">
       <button class="set-row" id="exp"><span class="set-body"><span class="set-t">Exportera framsteg</span><span class="set-d">${totalItems} ord gnuggade. Sparas som JSON – ta med till ny telefon</span></span><span class="chev">›</span></button>
@@ -557,8 +575,6 @@ function openSettings() {
     </div>`);
   $$("#seg-len button").forEach((b) => b.addEventListener("click", () => { SET.passLen = +b.dataset.n; save(); $$("#seg-len button").forEach((x) => x.classList.toggle("on", x === b)); renderHome(); }));
   $("#tg-tts").addEventListener("click", () => { SET.tts = !SET.tts; save(); $("#tg-tts").classList.toggle("on", SET.tts); updateVoice(); });
-  $("#open-help").addEventListener("click", openHelp);
-  $("#open-cl").addEventListener("click", openChangelog);
   $("#exp").addEventListener("click", async () => {
     const txt = JSON.stringify({ app: "gnugga", lang: LANG.code, ver: APP_VERSION, date: today(), progress: P, settings: SET });
     try { if (navigator.share) { await navigator.share({ title: "Gnugga-framsteg", text: txt }); } else { await navigator.clipboard.writeText(txt); toast("Kopierat till urklipp"); } }
@@ -574,17 +590,24 @@ function openSettings() {
 $("#settings-btn").addEventListener("click", openSettings);
 $("#lang-chip").addEventListener("click", () => toast(`${LANG.name} är enda språket än så länge`));
 
-function openHelp() {
-  openModal(`<div class="mh"><h2>Hjälp & grundtankar</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
-    <div class="help">
+function renderHelp() {
+  $("#help-body").innerHTML = `<div class="help">
       <details open><summary>Vad Gnugga är</summary><div class="more"><p>Ett komplement till Flippa. Flippa nöter <i>ord</i>; Gnugga nöter <i>formerna</i>: bestämd form, plural, verbböjning, adjektiv som ska stämma. ${LANG.intro}</p></div></details>
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
       <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Lärt</b> (du har börjat) → <b>Övat</b> (minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Varje ord du gnuggat i ett mönster har en egen låda (som i Flippa). Fel → tillbaka till start och dags igen idag; rätt → längre intervall.</p></div></details>
       <details><summary>Läsa eller göra?</summary><div class="more"><p>Båda, men mest göra. Regeln är max en skärm och läses en gång. Sedan är det övningarna som bygger färdigheten – ungefär 10 % läsa, 90 % göra. Fördjupningen under varje mönster är för när du blir nyfiken, inte ett krav.</p></div></details>
-      <details><summary>Facit och källor</summary><div class="more"><p>Böjningsformerna kommer från Wiktionary (via kaikki.org), inte från en AI som gissar. Frekvensordningen kommer från undertexter (OpenSubtitles), så de vanligaste orden kommer först. Data: CC BY-SA 4.0.</p></div></details>
-    </div>`);
+      <details><summary>Statistiken</summary><div class="more"><p><b>Rätt på tid</b> är Gnuggas eget mått: andelen svar som var både rätt och snabba (under sju sekunder på första försöket, eller rätt i "Rätt eller fel?"). Det är måttet på att en form börjar sitta automatiskt.</p><p><b>Vad du gör fel</b> bygger på feldiagnosen: är det bara krumelurerna, fel ändelse, fel stam eller en riktig form fast fel form? Är det mest krumelurer är det tangentbordet, inte grammatiken.</p></div></details>
+    </div>
+    <div class="eyebrow" style="margin-top:6px">Om appen</div>
+    <div class="set">
+      <button class="set-row" id="help-cl"><span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Gnugga ${APP_VERSION} · senast ${CHANGELOG[0].date}</span></span><span class="chev">›</span></button>
+      <div class="set-row"><span class="set-body"><span class="set-t">Innehåll & källor</span><span class="set-d">${L.nouns.length} substantiv · ${L.verbs.length} verb · ${L.adjs.length} adjektiv. Böjningsformer från Wiktionary via kaikki.org (CC BY-SA 4.0). Frekvens: OpenSubtitles. Regler och svenska glosor skrivna för Gnugga.</span></span></div>
+      <div class="set-row"><span class="set-body"><span class="set-t">Grundtankarna i korthet</span><span class="set-d">Kort regel, sedan mest övning. Skriv eller säg formen, känn inte bara igen den. Blanda mönster när grunden sitter. Ledtråd före facit. Facit ur riktig data.</span></span></div>
+    </div>
+    <div class="note">Gnugga ${APP_VERSION} · byggd av Tom för Rumänien-resan 2026</div>`;
+  $("#help-cl").addEventListener("click", openChangelog);
 }
 /* Flera versioner samma dag → en post per dag med dagens senaste versionsnummer (som Flippa) */
 function mergeDays(log) {
@@ -596,7 +619,77 @@ function openChangelog() {
   openModal(`<div class="mh"><h2>Vad är nytt</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
     ${mergeDays(CHANGELOG).map((d) => `<div class="cl-day"><div class="cl-h"><span>${d.date}</span><span>${d.ver}</span></div>${d.items.map((i) => `<div class="cl-item"><span class="t ${i.type}">${{ new: "Nytt", improved: "Bättre", fixed: "Fixat" }[i.type]}</span><span>${i.t}${i.desc ? `<div class="small muted" style="margin-top:4px">${i.desc}</div>` : ""}</span></div>`).join("")}</div>`).join("")}`);
 }
-$("#version-tag").addEventListener("click", openChangelog);
+$("#version-tag").addEventListener("click", () => { renderHelp(); show("s-help"); });
+
+/* ============================================================
+   Statistik (flik): A vecka & heatmap · B period & KPI · E svagaste orden · F feltyper
+   ============================================================ */
+let statsPeriod = "month";
+const DIA_LABEL = { dia: ["Bara krumelurerna (ă â î ș ț)", "var(--warm)"], ending: ["Fel ändelse eller annat", "var(--fail)"], stem: ["Rätt ändelse, fel stam", "#9b6dff"], form: ["Riktig form, men fel form", "#5b8cff"] };
+function sumDays(from, to) { // [from, to] inkl., ISO-datum
+  const r = { n: 0, right: 0, fast: 0, pass: 0, days: 0 };
+  for (const d in P.days) { if (d >= from && d <= to) { const x = P.days[d]; r.n += x.n || 0; r.right += x.right || 0; r.fast += x.fast || 0; r.pass += x.pass || 0; r.days++; } }
+  return r;
+}
+function longestStreak() {
+  const ds = Object.keys(P.days).sort(); let best = 0, cur = 0, prev = null;
+  for (const d of ds) { cur = prev && addDays(prev, 1) === d ? cur + 1 : 1; best = Math.max(best, cur); prev = d; }
+  return best;
+}
+function renderStats() {
+  $("#stats-lang").textContent = `${LANG.flag} ${LANG.name}`;
+  const t = today();
+  // A
+  const week = []; for (let i = 6; i >= 0; i--) week.push(addDays(t, -i));
+  const n7 = week.filter((d) => P.days[d]).length;
+  const totalDays = Object.keys(P.days).length;
+  const names = ["S", "M", "T", "O", "T", "F", "L"];
+  let heat = ""; const start = addDays(t, -(18 * 7 - 1 + new Date(t + "T12:00:00").getDay()));
+  for (let i = 0; i < 18 * 7 + 7; i++) { const d = addDays(start, i); if (d > t) break; const x = P.days[d]; const n = x ? x.n : 0;
+    heat += `<span class="d ${n >= 40 ? "l4" : n >= 25 ? "l3" : n >= 12 ? "l2" : n > 0 ? "l1" : ""} ${d === t ? "now" : ""}" title="${d}: ${n}"></span>`; }
+  // B
+  const spans = { week: 7, month: 30, all: 36500 };
+  const len = spans[statsPeriod];
+  const cur = sumDays(addDays(t, -(len - 1)), t), prev = sumDays(addDays(t, -(2 * len - 1)), addDays(t, -len));
+  const pct100 = (a, b) => b ? Math.round(100 * a / b) : 0;
+  const acc = pct100(cur.right, cur.n), accPrev = pct100(prev.right, prev.n), fast = pct100(cur.fast, cur.n), fastPrev = pct100(prev.fast, prev.n);
+  const delta = (v, p) => statsPeriod === "all" || !prev.n ? "" : `<span class="delta ${v - p < 0 ? "neg" : ""}">${v - p >= 0 ? "+" : ""}${v - p}</span>`;
+  // E
+  const weak = Object.entries(P.items).map(([k, v]) => ({ pid: k.split("|")[0], key: k.split("|")[1], ...v })).filter((i) => i.box <= 1 && i.seen >= 1)
+    .sort((x, y) => (x.box - y.box) || ((y.seen - y.right) - (x.seen - x.right)) || (y.seen - x.seen)).slice(0, 10).filter((i) => byId[i.pid]);
+  // F
+  const errs = {}; let errTot = 0;
+  for (const d in (P.errs || {})) { if (d >= addDays(t, -29)) for (const c in P.errs[d]) { errs[c] = (errs[c] || 0) + P.errs[d][c]; errTot += P.errs[d][c]; } }
+  const errOrder = Object.keys(DIA_LABEL).sort((x, y) => (errs[y] || 0) - (errs[x] || 0));
+
+  $("#stats-body").innerHTML = `
+    <div class="st-hero"><div class="big">${n7}<span> av 7 dagar</span></div><div class="cap">den här veckan · ${totalDays} gnuggdag${totalDays === 1 ? "" : "ar"} totalt${totalDays > 1 ? ` · längsta svit ${longestStreak()}` : ""}</div></div>
+    <div class="week"><div class="dots">${week.map((d) => `<span class="dot ${P.days[d] ? "on" : ""} ${d === t ? "now" : ""}">${names[new Date(d + "T12:00:00").getDay()]}</span>`).join("")}</div></div>
+    <div class="eyebrow">Senaste 18 veckorna</div>
+    <div class="heat">${heat}</div>
+    <div class="legend">mindre <span class="d"></span><span class="d l1"></span><span class="d l2"></span><span class="d l3"></span><span class="d l4"></span> mer</div>
+
+    <div class="seg wide" id="st-period">${[["week", "Vecka"], ["month", "Månad"], ["all", "Allt"]].map(([v, l]) => `<button data-v="${v}" class="${statsPeriod === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    <div class="kpis">
+      <div class="kpi"><b>${cur.pass}</b><span>pass</span></div>
+      <div class="kpi"><b>${cur.n}</b><span>övningar</span></div>
+      <div class="kpi"><b>${acc} %${delta(acc, accPrev)}</b><span>träffsäkerhet</span></div>
+      <div class="kpi"><b>${fast} %${delta(fast, fastPrev)}</b><span>rätt på tid</span></div>
+    </div>
+
+    <div class="card"><h3>Fastnar oftast</h3>
+      ${weak.length ? `<div class="wl">${weak.map((i) => `<span>${esc(i.key)}<em>${esc(byId[i.pid].short.toLowerCase())}</em></span>`).join("")}</div>
+      <button class="cta sec" id="st-weak">Gnugga just dessa · ${weak.length < 6 ? weak.length * 2 : weak.length} övningar</button>` : `<div class="muted small">Inga svaga ord just nu – allt du gnuggat ligger i högre lådor.</div>`}
+    </div>
+
+    <div class="card"><h3>Vad du gör fel · senaste 30 dagarna</h3>
+      ${errTot ? `<div class="stack">${errOrder.map((c) => `<i style="width:${100 * (errs[c] || 0) / errTot}%;background:${DIA_LABEL[c][1]}"></i>`).join("")}</div>
+      <div class="flist">${errOrder.filter((c) => errs[c]).map((c) => `<div><span class="sw" style="background:${DIA_LABEL[c][1]}"></span>${DIA_LABEL[c][0]}<b>${Math.round(100 * errs[c] / errTot)} %</b></div>`).join("")}</div>
+      <div class="muted small">${errs.dia && errs.dia / errTot >= .4 ? "Mest krumelurer: det är tangentbordet, inte grammatiken. Använd knapparna under fältet." : errs.stem && errs.stem / errTot >= .35 ? "Många stamfel: vokalväxlingen (fată → fete) är det som behöver nötas." : errs.form && errs.form / errTot >= .35 ? "Du kan formerna men blandar ihop dem – läs uppgiften en gång till innan du skriver." : `${errTot} fel svar i Böj-övningar analyserade.`}</div>` : `<div class="muted small">Byggs upp när du svarat fel i några Böj-övningar. Fel är råmaterialet här.</div>`}
+    </div>`;
+  $$("#st-period button").forEach((b) => b.addEventListener("click", () => { statsPeriod = b.dataset.v; renderStats(); }));
+  const w = $("#st-weak"); if (w) w.addEventListener("click", () => startSession({ picks: weak.map((i) => ({ pid: i.pid, key: i.key })) }));
+}
 
 /* ============================================================
    PWA: service worker + uppdatering vid säkert tillfälle (som Flippa)
@@ -632,7 +725,7 @@ async function boot() {
     return;
   }
   updateVoice();
-  renderHome();
+  renderHome(); show("s-home");
   // Splashen ligger kvar minst SPLASH_MIN_MS (som Flippa) så den inte bara flimrar till –
   // och längre vid uppdatering så man hinner läsa vad som händer.
   const splash = $("#splash");
