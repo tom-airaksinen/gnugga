@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "8 september 2026", ver: "v18", items: [
+    { t: "Statistik: dagens ruta i heatmapen klipptes i kanten, och periodvalet Vecka/Månad/Allt syntes knappt mot bakgrunden", type: "fixed" },
+    { t: "Mer luft längst ner på alla flikar så det går att scrolla förbi innehållet", type: "improved" },
+  ]},
   { date: "8 september 2026", ver: "v17", items: [
     { t: "Tre flikar längst ner som i Flippa: Gnugga, Statistik och Hjälp", type: "new", hi: true, ico: "📊",
       desc: "Statistik visar dagar den här veckan och en heatmap över 18 veckor, pass/övningar/träffsäkerhet/rätt på tid per vecka, månad eller allt, de ord som fastnar oftast med en knapp för att gnugga just dem – och vad du faktiskt gör fel: krumelurer, ändelse, stam eller fel form." },
