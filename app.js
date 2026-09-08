@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
 
-const APP_VERSION = "v14";
+const APP_VERSION = "v15";
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
 const PATTERNS = LANG.patterns.slice().sort((a, b) => a.order - b.order);
@@ -474,8 +474,8 @@ function finish() {
   requestAnimationFrame(() => launchConfetti(acc >= 80 ? 90 : 45));
 }
 
-/* Fysik-konfetti på canvas (portad från Flippa): faller med gravitation, studsar mot
-   sidokanterna, en del landar och blir liggande på Klart-knappen, resten faller ut i botten. */
+/* Fysik-konfetti på canvas (portad från Flippa): skjuts ut från mitten, faller med
+   gravitation, studsar mot sidokanterna och försvinner ut i skärmens nederkant. */
 const prefersReducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 let cfRaf = null;
 function launchConfetti(count) {
@@ -488,9 +488,7 @@ function launchConfetti(count) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   canvas.width = W * dpr; canvas.height = H * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const sr = screen.getBoundingClientRect(), bb = btnEl.getBoundingClientRect();
-  const btn = { top: bb.top - sr.top, left: bb.left - sr.left, right: bb.right - sr.left };
-  const COLS = ["#3fcfa8", "#7ee6c9", "#f2b84b", "#5bbf72", "#ff8a3d", "#5b8cff", "#ffffff"];
+  const COLS = ["#5b8cff", "#8fbf5a", "#ffd24a", "#ff8a3d", "#e05a4f", "#b06bf0", "#fff"]; // samma glada palett som Flippa
   const rp = (a, b) => a + Math.random() * (b - a);
   let parts = [];
   // Skur från övre mitten: kraftig sidofart så bitarna sprätter ut mot väggarna och
@@ -511,11 +509,7 @@ function launchConfetti(count) {
         p.vy += G; p.vx *= AIR; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
         if (p.x < M) { p.x = M; p.vx = Math.abs(p.vx) * WALL; p.vr += rp(-0.2, 0.2); }
         else if (p.x > W - M) { p.x = W - M; p.vx = -Math.abs(p.vx) * WALL; p.vr += rp(-0.2, 0.2); }
-        if (p.vy > 0 && p.x > btn.left - 3 && p.x < btn.right + 3 && (p.y + p.h / 2) >= btn.top && p.y < btn.top + 16) {
-          p.y = btn.top - p.h / 2; p.vy = -p.vy * 0.28; p.vx *= 0.55;
-          if (Math.abs(p.vy) < 0.7) { p.vy = 0; p.vx *= 0.4; if (Math.abs(p.vx) < 0.25) { p.rest = true; p.y = btn.top - p.h / 2; } }
-        }
-        if (p.y - 12 > H) p.dead = true;
+        if (p.y - 12 > H) p.dead = true; // ut i botten (ingen landning på Klart)
         if (!p.dead) moving++;
       }
       if (!p.dead) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); }

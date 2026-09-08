@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "8 september 2026", ver: "v15", items: [
+    { t: "Konfettin har Flippas glada färger och faller ut i botten i stället för att lägga sig på Klart-knappen", type: "improved" },
+  ]},
   { date: "7 september 2026", ver: "v14", items: [
     { t: "Mer luft i Säg det-övningen mellan svaret och knapparna", type: "improved" },
   ]},
