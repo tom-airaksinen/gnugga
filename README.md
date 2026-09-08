@@ -26,6 +26,8 @@ Forskningsunderlaget finns i `docs/research-grammatikinlarning.md`, planen i `do
 | Substantiv | Bestämd form singular · Plural · Bestämd plural · Genitiv-dativ |
 | Verb | Presens (regelbundna grupper) · Oregelbundna kärnverb · Perfekt |
 | Adjektiv | Kongruens (adjektivet följer med) |
+| Pronomen | Objektspronomen (ackusativ) · Dativpronomen |
+| Räkneord | Räkneord + substantiv (un/o, doi/două, plural, de från 20) |
 
 Lexikon: 700 substantiv, 300 verb, 220 adjektiv med fullständiga böjningsformer, valda efter
 frekvens i undertexter. Svenska glosor för alla.

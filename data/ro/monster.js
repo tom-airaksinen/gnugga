@@ -271,6 +271,125 @@ const RO = (() => {
       } },
   ];
 
+
+  /* ---- Pronomen (obetonade former, före verbet) ---- */
+  const PRON_ACC = [
+    { k: "mă", sv: "mig", who: "1:a person singular" }, { k: "te", sv: "dig", who: "2:a person singular" },
+    { k: "îl", sv: "honom", who: "3:e person singular maskulinum" }, { k: "o", sv: "henne", who: "3:e person singular femininum" },
+    { k: "ne", sv: "oss", who: "1:a person plural" }, { k: "vă", sv: "er", who: "2:a person plural" },
+    { k: "îi", sv: "dem (männen)", who: "3:e person plural maskulinum" }, { k: "le", sv: "dem (kvinnorna)", who: "3:e person plural femininum" },
+  ];
+  const PRON_DAT = [
+    { k: "îmi", sv: "mig", who: "1:a person singular" }, { k: "îți", sv: "dig", who: "2:a person singular" },
+    { k: "îi", sv: "honom / henne", who: "3:e person singular" }, { k: "ne", sv: "oss", who: "1:a person plural" },
+    { k: "vă", sv: "er", who: "2:a person plural" }, { k: "le", sv: "dem", who: "3:e person plural" },
+  ];
+  const SUBJ = [["Maria", "Maria"], ["Ion", "Ion"], ["Chelnerul", "Kyparen"], ["Profesoara", "Läraren"], ["Ghidul", "Guiden"], ["Mama", "Mamma"]];
+  const ACC_VERBS = [["vede", "ser"], ["ajută", "hjälper"], ["cunoaște", "känner"], ["așteaptă", "väntar på"], ["caută", "letar efter"], ["sună", "ringer"], ["înțelege", "förstår"], ["cheamă", "ropar på"], ["iubește", "älskar"]];
+  // {X} = mottagaren på svenska ("ger {X} boken" → "ger mig boken")
+  const DAT_VERBS = [["dă cartea", "ger {X} boken"], ["spune adevărul", "säger {X} sanningen"], ["arată drumul", "visar {X} vägen"], ["trimite un mesaj", "skickar {X} ett meddelande"], ["aduce cafeaua", "kommer med kaffet till {X}"], ["cumpără un bilet", "köper en biljett till {X}"], ["scrie o scrisoare", "skriver ett brev till {X}"], ["explică regula", "förklarar regeln för {X}"]];
+  const pronForms = (list) => Object.fromEntries(list.map((p) => [p.k, `${p.sv} (${p.who})`]));
+
+  PATTERNS.push(
+    { id: "pron-acc", area: "Pronomen", name: "Objektspronomen – mă, te, îl, o", short: "Ackusativ", order: 9,
+      rule: `"Mig, dig, honom, henne…" som objekt har <span class="sv">korta obetonade former som står före verbet</span>:<br><br>
+        ${ro("mă")} mig · ${ro("te")} dig · ${ro("îl")} honom · ${ro("o")} henne · ${ro("ne")} oss · ${ro("vă")} er · ${ro("îi")} dem (m) · ${ro("le")} dem (f)<br><br>
+        Maria <b>mă</b> vede (Maria ser mig) · Te <b>ajut</b> (jag hjälper dig) · <b>Îl</b> cunosc (jag känner honom) · <b>O</b> aștept (jag väntar på henne)<br><br>
+        <span class="sv">Svenskan sätter objektet efter verbet, rumänskan före.</span> Tänk "Maria mig-ser".`,
+      examples: [["Maria ___ vede (mig)", "Maria mă vede", "Maria ser mig"], ["Ion ___ cunoaște (henne)", "Ion o cunoaște", "Ion känner henne"], ["Ghidul ___ așteaptă (oss)", "Ghidul ne așteaptă", "Guiden väntar på oss"]],
+      more: `<p>De här är de <i>obetonade</i> formerna, de som används nästan alltid. Vill man betona finns långa former med <i>pe</i>: <i>pe mine, pe tine, pe el, pe ea, pe noi, pe voi, pe ei, pe ele</i> – och då står ofta båda: <i>Pe mine mă vede</i> (det är MIG hon ser).</p>
+        <p>I perfekt hamnar <i>o</i> efter verbet: <i>am văzut-o</i> (jag såg henne), medan de andra står före: <i>l-am văzut</i> (îl → l- före vokal), <i>te-am sunat</i>. Det drillas inte här ännu.</p>
+        <p>Personer som objekt får dessutom <i>pe</i> före namnet: <i>O văd pe Maria</i>. Pronomenet står kvar – rumänskan säger objektet två gånger.</p>`,
+      pool: () => PRON_ACC, key: (p) => p.k,
+      gen(p) {
+        const [s, ssv] = pick(SUBJ), [v, vsv] = pick(ACC_VERBS);
+        const full = `${s} ${p.k} ${v}.`;
+        return { q: "Fyll i pronomenet", big: `${s} <span class="blank">&nbsp;&nbsp;&nbsp;</span> ${v}.`, sub: `(${p.sv}) · ${ssv} ${vsv} ${p.sv}`,
+          answer: p.k, full, acceptFull: true, say: { sv: `${ssv} ${vsv} ${p.sv}`, ro: full },
+          hint: `Objektet är <b>${p.sv}</b> – ${p.who}. Den korta ackusativformen står före verbet.`,
+          why: `${p.sv} som objekt = ${ro(p.k)} (${p.who}): ${ro(full)}`,
+          distractors: pad3(PRON_ACC.map((x) => x.k).concat(PRON_DAT.map((x) => x.k)), [], p.k), forms: pronForms(PRON_ACC), target: `${p.sv} i ackusativ`, stemHint: "" };
+      } },
+
+    { id: "pron-dat", area: "Pronomen", name: "Dativpronomen – îmi, îți, îi", short: "Dativ", order: 10,
+      rule: `"Till mig, till dig, till honom…" – den som får något – har egna korta former, också <span class="sv">före verbet</span>:<br><br>
+        ${ro("îmi")} mig · ${ro("îți")} dig · ${ro("îi")} honom/henne · ${ro("ne")} oss · ${ro("vă")} er · ${ro("le")} dem<br><br>
+        Ion <b>îmi</b> dă cartea (Ion ger mig boken) · <b>Îți</b> spun adevărul (jag säger dig sanningen) · <b>Îi</b> arăt drumul (jag visar honom vägen)<br><br>
+        <span class="sv">Vardagens viktigaste:</span> <b>îmi place</b> = jag gillar (bokstavligen "mig behagar"). <i>Îmi place cafeaua. Îți place România?</i><br>
+        Obs: <i>ne</i> och <i>vă</i> är samma i ackusativ och dativ. <i>îi</i> är dativ singular men ackusativ plural maskulinum.`,
+      examples: [["Ion ___ dă cartea (mig)", "Ion îmi dă cartea", "Ion ger mig boken"], ["Maria ___ spune adevărul (dig)", "Maria îți spune adevărul", "Maria säger dig sanningen"], ["Ghidul ___ arată drumul (dem)", "Ghidul le arată drumul", "Guiden visar dem vägen"]],
+      more: `<p>Betonade former: <i>mie, ție, lui, ei, nouă, vouă, lor</i> – används för emfas och ofta tillsammans med den korta: <i>Mie îmi place</i> (JAG gillar det).</p>
+        <p>Före ett verb som börjar på vokal, och i perfekt, dras formerna ihop med bindestreck: <i>mi-a dat</i> (han gav mig), <i>ți-am spus</i> (jag sa till dig), <i>i-am arătat</i>. Samma logik, kortare form.</p>
+        <p>Känsloutrycken bygger på dativ: <i>mi-e foame</i> (jag är hungrig), <i>mi-e frig</i> (jag är kall), <i>mi-e dor de tine</i> (jag längtar efter dig). Bra chunks för Flippa.</p>`,
+      pool: () => PRON_DAT, key: (p) => p.k,
+      gen(p) {
+        const [s, ssv] = pick(SUBJ), [v, vsv] = pick(DAT_VERBS);
+        const full = `${s} ${p.k} ${v}.`;
+        const svs = `${ssv} ${vsv.replace("{X}", p.sv)}`;
+        return { q: "Fyll i pronomenet", big: `${s} <span class="blank">&nbsp;&nbsp;&nbsp;</span> ${v}.`, sub: `(till ${p.sv}) · ${svs}`,
+          answer: p.k, full, acceptFull: true, say: { sv: svs, ro: full },
+          hint: `Den som <b>får</b> något är ${p.sv} – ${p.who}. Dativformen står före verbet.`,
+          why: `till ${p.sv} = ${ro(p.k)} (dativ, ${p.who}): ${ro(full)}`,
+          distractors: pad3(PRON_DAT.map((x) => x.k).concat(PRON_ACC.map((x) => x.k)), [], p.k), forms: pronForms(PRON_DAT), target: `${p.sv} i dativ`, stemHint: "" };
+      } },
+  );
+
+  /* ---- Räkneord + substantiv ---- */
+  const NUM = { 3: "trei", 4: "patru", 5: "cinci", 6: "șase", 7: "șapte", 8: "opt", 9: "nouă", 10: "zece", 11: "unsprezece", 13: "treisprezece", 14: "paisprezece", 15: "cincisprezece", 16: "șaisprezece", 17: "șaptesprezece", 18: "optsprezece", 19: "nouăsprezece" };
+  const TENS = { 2: "douăzeci", 3: "treizeci", 4: "patruzeci", 5: "cincizeci", 6: "șaizeci", 7: "șaptezeci", 8: "optzeci", 9: "nouăzeci" };
+  // fem = substantivet tar feminina räkneordsformer (feminint alltid; neutrum i plural)
+  function numPhrase(n, noun) {
+    const femPl = noun.g === "f" || noun.g === "n";
+    if (n === 1) return `${noun.g === "f" ? "o" : "un"} ${noun.w}`;
+    if (n === 2) return `${femPl ? "două" : "doi"} ${noun.f.pl}`;
+    if (n === 12) return `${femPl ? "douăsprezece" : "doisprezece"} ${noun.f.pl}`;
+    if (n < 20) return `${NUM[n]} ${noun.f.pl}`;
+    if (n === 100) return `o sută de ${noun.f.pl}`;
+    const t = Math.floor(n / 10), u = n % 10;
+    let w = TENS[t];
+    if (u === 1) w += ` și ${noun.g === "f" ? "una" : "unu"}`;
+    else if (u === 2) w += ` și ${noun.g === "f" ? "două" : "doi"}`;
+    else if (u) w += ` și ${NUM[u]}`;
+    return `${w} de ${noun.f.pl}`;
+  }
+  function numWhy(n, noun) {
+    const g = GENUS[noun.g];
+    if (n === 1) return `Ett = obestämd artikel: ${ro(noun.g === "f" ? "o" : "un")} + singular. Ordet är ${g}.`;
+    if (n === 2) return `Två böjs efter genus: ${ro("doi")} för maskulint, ${ro("două")} för feminint – och för neutrum, som är feminint i plural. ${noun.w} är ${g} → ${ro(numPhrase(2, noun))}.`;
+    if (n === 12) return `Tolv är "två-mot-tio" och böjs som två: ${ro("doisprezece")} (m) / ${ro("douăsprezece")} (f och neutrum). ${noun.w} är ${g}.`;
+    if (n < 20) return `3–19: räkneordet + plural, inget emellan: ${ro(numPhrase(n, noun))}. (11–19 byggs som "x-spre-zece" = x mot tio.)`;
+    if (n === 100) return `Hundra är ett substantiv (o sută) och tar ${ro("de")} + plural: ${ro(numPhrase(n, noun))}.`;
+    const u = n % 10;
+    return `Från 20 kommer ${ro("de")} mellan räkneordet och pluralen: ${ro(numPhrase(n, noun))}.${u === 1 || u === 2 ? ` Slutsiffran ${u} böjs efter genus (${u === 1 ? "unu/una" : "doi/două"}).` : ""}`;
+  }
+  const NUM_POOL = [1, 1, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 15, 16, 18, 19, 20, 21, 22, 25, 30, 32, 40, 45, 50, 60, 71, 80, 99, 100];
+
+  PATTERNS.push(
+    { id: "num", area: "Räkneord", name: "Räkneord + substantiv", short: "Räkneord", order: 11,
+      rule: `Tre zoner:<br><br>
+        ${ro("1")} = obestämd artikel: <b>un</b> băiat · <b>o</b> fată<br>
+        ${ro("2")} böjs efter genus: <b>doi</b> băieți · <b>două</b> fete · <b>două</b> orașe (neutrum är feminint i plural). Samma för 12: doisprezece / douăsprezece<br>
+        ${ro("3–19")} + plural, inget emellan: trei case · zece lei · unsprezece copii<br>
+        ${ro("20 och uppåt")} + <span class="sv">de</span> + plural: douăzeci <b>de</b> trenuri · treizeci și cinci <b>de</b> lei · o sută <b>de</b> kilometri<br><br>
+        11–19 byggs "x mot tio": un-spre-zece, doi-spre-zece … Tiotalen: douăzeci, treizeci, patruzeci, cincizeci, șaizeci, șaptezeci, optzeci, nouăzeci.`,
+      examples: [["2 + fată", "două fete", "två flickor"], ["3 + casă", "trei case", "tre hus"], ["25 + tren", "douăzeci și cinci de trenuri", "tjugofem tåg"]],
+      more: `<p>Grundtalen 1–10 lär du bäst i Flippa: unu, doi, trei, patru, cinci, șase, șapte, opt, nouă, zece. Gnugga tränar det som kräver en regel: genus på 2 och 12, plural efter 3, och <i>de</i> från 20.</p>
+        <p>Ett tal på egen hand (utan substantiv) heter <i>unu</i> och <i>doi/două</i>: <i>Câți? – Doi.</i> Med substantiv blir ett till artikeln <i>un/o</i>.</p>
+        <p>Priser: <i>cincisprezece lei</i> (15 lei), <i>douăzeci de lei</i> (20 lei), <i>o sută de lei</i>. <i>Leu</i> (lejon) är valutan – plural <i>lei</i>.</p>
+        <p>Klockan använder femininum: <i>ora două</i>, <i>la ora douăsprezece</i>, eftersom <i>oră</i> är feminint.</p>`,
+      pool: (L) => L.nouns.slice(0, 250).filter((n) => n.f.pl && !n.f.pl.includes(" ")), key: (n) => n.w,
+      gen(n) {
+        const num = pick(NUM_POOL);
+        const ans = numPhrase(num, n);
+        const alt = { ...n, g: n.g === "f" ? "m" : "f" };
+        const cands = [numPhrase(num, alt), num >= 20 && num !== 100 ? ans.replace(" de ", " ") : numPhrase(num < 20 ? num + 20 : num - 10 > 2 ? num - 10 : 3, n), num > 1 ? ans.replace(n.f.pl, n.w) : `${n.g === "f" ? "un" : "o"} ${n.w}`, numPhrase(num === 2 ? 12 : num === 12 ? 2 : num === 1 ? 2 : 1, n)];
+        return { q: "Skriv talet med substantivet", big: `${num} ${n.w}`, sub: `${ART[n.g]} ${n.w} · ${gl(n)} · ${GENUS[n.g]}`, answer: ans,
+          say: { sv: `${num} ${gl(n).split(/[,;]/)[0]}`, ro: ans },
+          hint: num === 1 ? `Ett är samma som obestämd artikel. Ordet är <b>${GENUS[n.g]}</b>.` : num === 2 || num === 12 ? `Två (och tolv) böjs efter genus. Ordet är <b>${GENUS[n.g]}</b>${n.g === "n" ? " – och neutrum är feminint i plural" : ""}. Och substantivet ska stå i plural: <b>${n.f.pl}</b>.` : num < 20 ? `Under 20: räkneord + plural, inget emellan. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` : `Från 20 behövs ett litet ord mellan räkneordet och pluralen (<b>${n.f.pl}</b>).${num % 10 === 1 || num % 10 === 2 ? " Slutsiffran böjs efter genus." : ""}`,
+          why: numWhy(num, n), distractors: pad3(cands, [`${num} ${n.f.pl}`], ans), target: "räkneord + substantiv", stemHint: `Räkneordet stämmer – kolla substantivets form. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` };
+      } },
+  );
+
   return { code: "ro", name: "Rumänska", flag: "🇷🇴", tts: "ro-RO", keys: KEYS, patterns: PATTERNS,
     intro: "Rumänska är ett romanskt språk – som italienska och spanska – men med några drag som känns hemma för en svensk: bestämd artikel på slutet av ordet och ett genus (neutrum) som växlar." };
 })();

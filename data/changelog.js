@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "8 september 2026", ver: "v16", items: [
+    { t: "Tre nya mönster: objektspronomen (mă, te, îl, o…), dativpronomen (îmi, îți, îi…) och räkneord med substantiv (două fete, trei case, douăzeci de trenuri)", type: "new", hi: true, ico: "🔢",
+      desc: "Pronomenen övas i korta meningar med lucka – 'Maria ___ vede (mig)' – eftersom rätt form beror på rollen i satsen. Räkneorden tränar det som kräver en regel: genus på 2 och 12, plural från 3 och 'de' från 20. Själva siffrorna 1–10 lär du bäst i Flippa." },
+  ]},
   { date: "8 september 2026", ver: "v15", items: [
     { t: "Konfettin har Flippas glada färger och faller ut i botten i stället för att lägga sig på Klart-knappen", type: "improved" },
   ]},
