@@ -7,9 +7,9 @@
    - produktion före igenkänning: Välj bara i intro, sedan Böj/Säg det
    - interleaving: blockat bara första repen av nytt mönster, sedan blandas allt aktivt
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
-   - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Lärt→Övat→Automatiskt */
+   - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v21";
+const APP_VERSION = "v22";
 // AI-stjärnor (samma som Flippas "AI-kontext")
 const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
@@ -41,7 +41,7 @@ let SET = { passLen: 12, tts: true, name: "" };
 function loadProgress() {
   try { P = JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { P = null; }
   if (!P || !P.pat) P = { pat: {}, items: {}, days: {}, v: 1 };
-  for (const p of PATTERNS) { P.pat[p.id] = P.pat[p.id] || { seen: 0, right: 0, fast: 0, intro: null, last: null }; P.pat[p.id].dayList = P.pat[p.id].dayList || (P.pat[p.id].last ? [P.pat[p.id].last] : []); }
+  for (const p of PATTERNS) { P.pat[p.id] = P.pat[p.id] || { seen: 0, right: 0, fast: 0, intro: null, last: null }; P.pat[p.id].dayList = P.pat[p.id].dayList || (P.pat[p.id].last ? [P.pat[p.id].last] : []); P.pat[p.id].hist = P.pat[p.id].hist || []; }
   try { SET = Object.assign(SET, JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}); } catch (_) {}
 }
 function save() {
@@ -49,20 +49,30 @@ function save() {
   catch (e) { toast("Kunde inte spara – lagringen är full?"); }
 }
 
-/* Mönsternivå. Automatiskt = hög korrekthet OCH snabbhet (Ellis 2005: tidspress mäter automatisering). */
+/* Korrekthet = andel rätt i de senaste HIST_N svaren (glidande fönster), så att gamla fel inte
+   drar ner ett mönster man numera kan. Faller tillbaka på totalen för data från före v22. */
+const HIST_N = 20;
+function accOf(s) {
+  if (s.hist && s.hist.length) return s.hist.reduce((a, b) => a + b, 0) / s.hist.length;
+  return s.seen ? s.right / s.seen : 0;
+}
+function pushHist(s, ok) { (s.hist ||= []).push(ok ? 1 : 0); if (s.hist.length > HIST_N) s.hist.splice(0, s.hist.length - HIST_N); }
+
+/* Mönsternivå. Nytt → Övat (du har tränat) → Lärt (det sitter: minst 15 övningar, 70 % rätt)
+   → Automatiskt = hög korrekthet OCH snabbhet (Ellis 2005: tidspress mäter automatisering). */
 function level(id) {
   const s = P.pat[id];
   if (!s.seen) return { n: 0, t: "Nytt" };
-  const acc = s.right / s.seen;
+  const acc = accOf(s);
   // Automatiskt kräver också spridning över tid: minst tre olika dagar (en kvälls drill räcker inte)
   if (s.seen >= 40 && s.fast >= 15 && acc >= .85 && (s.dayList || []).length >= 3) return { n: 3, t: "Automatiskt" };
-  if (s.seen >= 15 && acc >= .7) return { n: 2, t: "Övat" };
-  return { n: 1, t: "Lärt" };
+  if (s.seen >= 15 && acc >= .7) return { n: 2, t: "Lärt" };
+  return { n: 1, t: "Övat" };
 }
 function pct(id) {
   const s = P.pat[id];
   if (!s.seen) return 0;
-  const acc = s.right / s.seen;
+  const acc = accOf(s);
   const days = Math.min(1, (s.dayList || []).length / 3);
   return Math.min(100, Math.round(20 + Math.min(1, s.seen / 40) * 40 * acc + Math.min(1, s.fast / 15) * 25 + days * 15));
 }
@@ -203,7 +213,7 @@ function openPattern(id) {
   const items = Object.entries(P.items).filter(([k]) => k.startsWith(id + "|")).map(([k, v]) => ({ key: k.split("|")[1], ...v }));
   const weak = items.filter((i) => i.box <= 1).slice(0, 12), strong = items.filter((i) => i.box >= 4).slice(0, 12);
   $("#p-body").innerHTML = ruleCard(p) +
-    (s.seen ? `<div class="card"><h3>Din nivå</h3><div class="small muted">${s.seen} övningar · ${Math.round(100 * s.right / s.seen)} % rätt · ${s.fast} rätt på tid · ${(s.dayList || []).length} dagar · ${items.length} ord gnuggade</div><div class="bar" style="height:8px"><i style="width:${pct(id)}%"></i></div><div class="small muted">Automatiskt = minst 40 övningar, 85 % rätt, 15 rätt på tid och övat minst tre olika dagar.</div>
+    (s.seen ? `<div class="card"><h3>Din nivå</h3><div class="small muted">${s.seen} övningar · ${Math.round(100 * accOf(s))} % rätt${s.hist && s.hist.length >= HIST_N ? ` (senaste ${HIST_N})` : ``} · ${s.fast} rätt på tid · ${(s.dayList || []).length} dagar · ${items.length} ord gnuggade</div><div class="bar" style="height:8px"><i style="width:${pct(id)}%"></i></div><div class="small muted">Lärt = minst 15 övningar och 70 % rätt. Automatiskt = minst 40 övningar, 85 % rätt, 15 rätt på tid och tränat minst tre olika dagar. Procenten räknas på dina senaste 20 svar, så gamla fel hänger inte kvar.</div>
       ${weak.length ? `<div class="small muted" style="margin-top:6px">Svagast just nu</div><div class="wordlist">${weak.map((i) => `<span class="weak">${esc(i.key)}</span>`).join("")}</div>` : ""}
       ${strong.length ? `<div class="small muted" style="margin-top:6px">Sitter bra</div><div class="wordlist">${strong.map((i) => `<span class="strong">${esc(i.key)}</span>`).join("")}</div>` : ""}</div>` : "") +
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
@@ -433,7 +443,7 @@ function grade(ok, { final, silent, timeout } = {}) {
   const full = c.ex.full || c.ex.answer;
   if (ok) {
     S.right++; S.total++;
-    const s = P.pat[c.p.id]; s.seen++; s.right++; s.last = today(); touchDay(s);
+    const s = P.pat[c.p.id]; s.seen++; s.right++; pushHist(s, true); s.last = today(); touchDay(s);
     const fast = c.type === "rattfel" || (c.type === "boj" && ms < 7000 && c.attempts === 1);
     if (fast) s.fast++;
     bumpItem(c.p.id, c.ex.key, true, c.attempts === 1 && fast);
@@ -451,7 +461,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     return;
   } else {
     S.total++;
-    const s = P.pat[c.p.id]; s.seen++; s.last = today(); touchDay(s);
+    const s = P.pat[c.p.id]; s.seen++; pushHist(s, false); s.last = today(); touchDay(s);
     bumpItem(c.p.id, c.ex.key, false, false);
     logDay(false); if (c.type === "boj") logErr(c.diagCat || "ending"); save();
     S.log.push({ pid: c.p.id, ok: false });
@@ -608,7 +618,7 @@ function renderHelp() {
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
-      <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Lärt</b> (du har börjat) → <b>Övat</b> (minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Varje ord du gnuggat i ett mönster har en egen låda (som i Flippa). Fel → tillbaka till start och dags igen idag; rätt → längre intervall.</p></div></details>
+      <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Övat</b> (du har tränat på det) → <b>Lärt</b> (det sitter: minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Procent rätt räknas alltid på dina senaste 20 svar i mönstret, inte på hela historiken. Ett mönster du kämpade med i början men kan nu ska se ut så.</p><p>Varje ord du gnuggat i ett mönster har en egen låda (som i Flippa). Fel → tillbaka till start och dags igen idag; rätt → längre intervall.</p></div></details>
       <details><summary>Läsa eller göra?</summary><div class="more"><p>Båda, men mest göra. Regeln är max en skärm och läses en gång. Sedan är det övningarna som bygger färdigheten – ungefär 10 % läsa, 90 % göra. Fördjupningen under varje mönster är för när du blir nyfiken, inte ett krav.</p></div></details>
       <details><summary>Statistiken</summary><div class="more"><p><b>Rätt på tid</b> är Gnuggas eget mått: andelen svar som var både rätt och snabba (under sju sekunder på första försöket, eller rätt i "Rätt eller fel?"). Det är måttet på att en form börjar sitta automatiskt.</p><p><b>Vad du gör fel</b> bygger på feldiagnosen: är det bara krumelurerna, fel ändelse, fel stam eller en riktig form fast fel form? Är det mest krumelurer är det tangentbordet, inte grammatiken.</p></div></details>
     </div>

@@ -14,7 +14,7 @@ fler språk är data, inte kod.
 3. **Blanda mönster** när grunden sitter (interleaving). Det känns svårare, och det är meningen.
 4. **Feedback i två steg:** ledtråd utan facit → nytt försök → facit + varför.
 5. **Säg det högt.** Muntligt + skriftligt slår skriftligt ensamt.
-6. **Gamifiera kompetens, inte närvaro:** nivå per mönster (Nytt → Lärt → Övat → Automatiskt) och en förlåtande veckoöversikt i stället för streak.
+6. **Gamifiera kompetens, inte närvaro:** nivå per mönster (Nytt → Övat → Lärt → Automatiskt, korrekthet på senaste 20 svaren) och en förlåtande veckoöversikt i stället för streak.
 7. **Facit ur riktig böjningsdata** (Wiktionary), aldrig ur en språkmodell.
 
 Forskningsunderlaget finns i `docs/research-grammatikinlarning.md`, planen i `docs/plan.md`.
@@ -39,7 +39,7 @@ frekvens i undertexter. Svenska glosor för alla.
 | Välj | flerval | bara första repen av ett nytt mönster |
 | Böj | skriv formen (knappar för ă â î ș ț) | huvudformat |
 | Säg det | säg högt, visa, bedöm dig själv | var femte övning |
-| Rätt eller fel? | fyra sekunder, mäter automatisering | när mönstret är Övat |
+| Rätt eller fel? | fyra sekunder, mäter automatisering | när mönstret är Lärt |
 
 ## Arkitektur
 

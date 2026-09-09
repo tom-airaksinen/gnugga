@@ -9,7 +9,8 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
-  { date: "9 september 2026", ver: "v21", items: [
+  { date: "9 september 2026", ver: "v22", items: [
+    { t: "Nivåerna heter nu Nytt → Övat → Lärt → Automatiskt: Övat betyder att du tränat, Lärt att det sitter.", type: "improved", hi: true, ico: "🎯", desc: "Procent rätt räknas på dina senaste 20 svar i mönstret, så gamla fel drar inte ner dig när du kan det nu." },
     { t: "Startsidan är renare: veckoöversikten (\"3 av 7 dagar\") finns nu bara under Statistik.", type: "improved" },
   ] },
   { date: "8 september 2026", ver: "v19", items: [

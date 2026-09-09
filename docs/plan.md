@@ -118,7 +118,7 @@ Feedback: rätt → grönt + ev. kort "bra, och notera att…". Fel → **steg 1
 ### 2.4 SRS: Leitner per mönster × lexem, plus mönsternivå
 
 - **Per uppgift (mönster × lexem):** Leitner-lådor som i Flippa; fel → låda 1.
-- **Per mönster:** aggregerat läge **Nytt → Lärt → Övat → Automatiskt**, där Automatiskt
+- **Per mönster:** aggregerat läge **Nytt → Övat → Lärt → Automatiskt** (Övat = har tränat, Lärt = sitter; korrekthet räknas på senaste 20 svaren), där Automatiskt
   kräver ≥ 90 % rätt *i snabbläget* de senaste 20 svaren. Det är det som visas som progress.
 - **Introduktion:** nytt mönster dag 0, repeteras dag 1, 2, 4, 8… (tätt först).
 - **Blandning:** passet väljer uppgifter ur alla aktiva mönster, viktat mot förfallna och
