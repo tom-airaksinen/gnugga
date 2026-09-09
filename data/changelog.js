@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "9 september 2026", ver: "v21", items: [
+    { t: "Startsidan är renare: veckoöversikten (\"3 av 7 dagar\") finns nu bara under Statistik.", type: "improved" },
+  ] },
   { date: "8 september 2026", ver: "v19", items: [
     { t: "AI-kontext efter varje svar, som i Flippa: en knapp öppnar Googles AI-läge med en färdig fråga om just den formen – \"Plural av grijă på rumänska är griji – varför?\". Finns även på mönsterskärmen för hela regeln", type: "new", hi: true, ico: "✨",
       desc: "Den statiska regeln räcker oftast, men ibland vill man veta mer: undantag, historia, liknande ord. Frågan är färdigformulerad med ordet, formen och sammanhanget, så det är ett tryck." },
