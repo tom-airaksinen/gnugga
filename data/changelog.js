@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "10 september 2026", ver: "v26", items: [
+    { t: "Skrollningen studsar mjukt i slutet, som i Flippa. Rubriken ligger nu still medan innehållet skrollar.", type: "improved" },
+  ] },
   { date: "10 september 2026", ver: "v25", items: [
     { t: "Mer luft under ikonerna i flikraden, så de inte sitter tätt mot skärmkanten på iPhone.", type: "fixed" },
   ] },

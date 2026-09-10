@@ -24,10 +24,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); overscroll
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased;
-  display: flex; justify-content: center; min-height: 100dvh;
+  display: flex; justify-content: center; overflow: hidden;
 }
-#app { width: 100%; max-width: 480px; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
-.screen { display: none; flex: 1; flex-direction: column; animation: fadein .18s ease; }
+/* Appen är exakt en skärm hög och innehållet scrollar inuti (som Flippa). Det ger
+   iOS gummibandseffekt när man når slutet, och rubriken ligger still medan man scrollar. */
+#app { width: 100%; max-width: 480px; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.screen { display: none; flex: 1; min-height: 0; flex-direction: column; animation: fadein .18s ease; }
 .screen.on { display: flex; }
 @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .screen { animation: none; } * { transition: none !important; animation: none !important; } }
@@ -56,7 +58,10 @@ body.no-tts .spk { display: none !important; }
 
 .hdr .title { font-size: 1.1rem; font-weight: 700; flex: 1; min-width: 0; }
 
-.pad { padding: 4px 16px calc(72px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+.pad { padding: 4px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px;
+  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* På flikskärmarna ligger säkerhetszonen redan i flikradens höjd (som #app reserverar) */
+body.tabbar-on .pad { padding-bottom: 18px; }
 .eyebrow { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
 .muted { color: var(--muted); }
 .small { font-size: .85rem; }
@@ -127,6 +132,7 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .prog { flex: 1; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .prog i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s ease; }
 .counter { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+#s-session { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .tags { display: flex; gap: 6px; padding: 4px 16px 0; flex-wrap: wrap; align-items: center; }
 .tag { font-size: .74rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
 .tag.type { background: rgba(63,207,168,.15); color: var(--accent); }
@@ -192,13 +198,13 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .fb .acts .cta.hint { background: var(--warm); color: #2b1a00; }
 
 /* Intro (nytt mönster i passet) */
-.intro { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 8px 16px 20px; }
+.intro { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 8px 16px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .intro .big-t { font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
 
 /* Klar */
 #s-done { position: relative; }
 #done-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-.done { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; gap: 16px; padding: calc(30px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); }
+.done { position: relative; z-index: 1; flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 16px; padding: calc(30px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); }
 .done h2 { font-size: 1.7rem; font-weight: 800; text-align: center; letter-spacing: -.01em; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .stat { background: var(--surface); border-radius: 14px; padding: 12px; text-align: center; }
@@ -216,7 +222,7 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .ver .linkish { font-size: .8rem; color: var(--muted); text-decoration: none; }
 
 /* Modaler */
-body.modal-open { position: fixed; width: 100%; overflow: hidden; }
+body.modal-open .pad, body.modal-open .intro, body.modal-open .done, body.modal-open #s-session { overflow: hidden; }
 .modal { overscroll-behavior: contain; }
 .modal-root { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
 .modal-back { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
