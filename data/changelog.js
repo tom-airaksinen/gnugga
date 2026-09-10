@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "10 september 2026", ver: "v25", items: [
+    { t: "Mer luft under ikonerna i flikraden, så de inte sitter tätt mot skärmkanten på iPhone.", type: "fixed" },
+  ] },
   { date: "10 september 2026", ver: "v24", items: [
     { t: "Ledtrådarna säger riktig svenska igen: \"flera timmar\", \"jag gör\", \"timmens / till timmen\", \"stort hus\". Formerna kommer ur SALDO (Språkbanken) i stället för att appen böjer svenska själv.", type: "improved", hi: true, ico: "🇸🇪", desc: "Alla 700 substantiv, 300 verb och 220 adjektiv har nu svenska böjningsformer. Där en form saknas visas grundformen med etikett, till exempel \"mörker (plural)\"." },
   ] },
