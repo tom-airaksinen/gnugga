@@ -2,3 +2,5 @@
 scripts/raw/kaikki-ro.jsonl
 scripts/raw/ro_50k.txt
 scripts/raw/gloss-todo.txt
+scripts/raw/saldom.xml
+scripts/raw/sv-morf-todo.txt

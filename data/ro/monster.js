@@ -44,6 +44,32 @@ const RO = (() => {
   const ro = (s) => `<span class="ro">${s}</span>`;
   const gl = (x) => x.sv || x.en || "";
 
+  /* Svenska böjningsformer ur SALDO (fältet svf i lexikonet). Appen böjer aldrig svenska själv:
+     finns formen används den ("flera timmar"), annars visas grundform + etikett ("timme (plural)"). */
+  const sv1 = (x) => gl(x).split(/[,;]/)[0];
+  const nDef = (n) => (n.svf ? n.svf.def : `${sv1(n)} (bestämd form)`);
+  const nPl = (n) => (n.svf && n.svf.pl ? `flera ${n.svf.pl}` : `${sv1(n)} (plural)`);
+  const nPlDef = (n) => (n.svf && n.svf.pldef ? n.svf.pldef : `${sv1(n)} (bestämd plural)`);
+  const nGd = (n, pl) => {
+    const f = n.svf;
+    if (f && (pl ? f.pldefg && f.pldef : f.defg && f.def))
+      return pl ? `${f.pldefg} / till ${f.pldef}` : `${f.defg} / till ${f.def}`;
+    return `${sv1(n)} (till/av, ${pl ? "plural" : "bestämd singular"})`;
+  };
+  const nCount = (num, n) => {
+    const f = n.svf;
+    if (num === 1) return f ? `${f.g === "n" ? "ett" : "en"} ${f.sg}` : `1 + ${sv1(n)}`;
+    return f && f.pl ? `${num} ${f.pl}` : `${num} + ${sv1(n)}`;
+  };
+  const adjPhrase = (a, n, pl) => {
+    const fa = a.svf, fn = n.svf;
+    if (fa && fn && (pl ? fn.pl : fn.sg))
+      return pl ? `${fa.pl} ${fn.pl}` : `${fn.g === "n" ? fa.n : fa.u} ${fn.sg}`;
+    return `${sv1(a)} + ${sv1(n)} (${pl ? "plural" : "singular"})`;
+  };
+  const vPres = (pi, v) => (v.svf ? `${PERS[pi].sv} ${v.svf.pres}` : `${PERS[pi].sv} + ${svVerb(v)} (presens)`);
+  const vPerf = (pi, v) => (v.svf ? `${PERS[pi].sv} har ${v.svf.sup}` : `${PERS[pi].sv} + ${svVerb(v)} (perfekt)`);
+
   /* Ord som bara lever i fasta uttryck – de duger inte som drillord ("jur" finns bara i "în jur"). */
   const NOUN_SKIP = new Set(["jur", "oară"]);
   const NOUNS = (L) => L.nouns.filter((n) => !NOUN_SKIP.has(n.w));
@@ -103,7 +129,7 @@ const RO = (() => {
   const svVerb = (v) => gl(v).split(/[,;(]/)[0].trim();
   /* Svenska glosor finns bara i grundform (infinitiv/singular). Böj dem INTE här – "jag göra"
      och "flera timme" blir fel. Visa grundformen + en etikett för formen som efterfrågas. */
-  const svPers = (pi, v) => `${PERS[pi].sv} + ${svVerb(v)} (presens)`;
+  const svPers = (pi, v) => vPres(pi, v);
 
   /* ---- mönster ---- */
   const PATTERNS = [
@@ -121,7 +147,7 @@ const RO = (() => {
         const w = n.w, st = w.slice(0, -1);
         const cands = [w + "ul", w + "l", w + "le", st + "a", st + "ea", w + "ua", st + "ia", st + "ul"].filter((x) => x !== w);
         return { q: "Bestämd form av", big: w, sub: `${ART[n.g]} ${w} · ${gl(n)}`, answer: n.f.sgd,
-          say: { sv: `${gl(n).split(/[,;]/)[0]} (bestämd form)`, ro: n.f.sgd },
+          say: { sv: nDef(n), ro: n.f.sgd },
           hint: `Ordet är <b>${GENUS[n.g]}</b> (${ART[n.g]} ${w}). Vilken ändelse får ${GENUS_PL[n.g]} ord som slutar på <b>-${w.endsWith("ie") ? "ie" : w.slice(-1)}</b>?`,
           why: defRule(n), distractors: pad3(cands, [w + "ei", w + "lui"], n.f.sgd), forms: nounForms(n), target: "bestämd singular", stemHint: STEM_HINT_N };
       } },
@@ -141,7 +167,7 @@ const RO = (() => {
         const w = n.w, st = w.slice(0, -1);
         const cands = [st + "e", st + "i", w + "uri", w + "e", w + "i", st + "uri"].filter((x) => x !== w);
         return { q: "Plural av", big: w, sub: `${ART[n.g]} ${w} · ${gl(n)}`, answer: n.f.pl,
-          say: { sv: `${gl(n).split(/[,;]/)[0]} (plural)`, ro: n.f.pl },
+          say: { sv: nPl(n), ro: n.f.pl },
           hint: `Ordet är <b>${GENUS[n.g]}</b>. ${n.g === "f" ? "Feminina får -e eller -i." : n.g === "m" ? "Maskulina får -i." : "Neutrum får -e eller -uri."}${vowelShift(n) ? " Och kolla om en vokal i stammen växlar." : ""}`,
           why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl), forms: nounForms(n), target: "obestämd plural", stemHint: STEM_HINT_N };
       } },
@@ -160,7 +186,7 @@ const RO = (() => {
         const p = n.f.pl;
         const cands = [p + "le", p + "i", p + "ile", p + "ele", p.slice(0, -1) + "ile", p + "ul"].filter((x) => x !== p);
         return { q: "Bestämd form plural av", big: n.w, sub: `plural: ${p} · ${gl(n)}`, answer: n.f.pld,
-          say: { sv: `${gl(n).split(/[,;]/)[0]} (bestämd plural)`, ro: n.f.pld },
+          say: { sv: nPlDef(n), ro: n.f.pld },
           hint: `Utgå från pluralen <b>${p}</b>. Den slutar på <b>-${p.endsWith("uri") ? "uri" : p.slice(-1)}</b> – vilken artikel hör dit?`,
           why: plDefRule(n), distractors: pad3(cands, [p + "lor"], n.f.pld), forms: nounForms(n), target: "bestämd plural", stemHint: `Utgå från pluralen <b>${p}</b> – stammen ska vara som där.` };
       } },
@@ -226,7 +252,7 @@ const RO = (() => {
         if (v.inf === "a trebui") pi = 2;
         const ans = `${AUX[pi]} ${v.part}`;
         return { q: "Perfekt av", big: v.inf, sub: persLabel(pi), gloss: gl(v), answer: ans,
-          say: { sv: `${PERS[pi].sv} + ${svVerb(v)} (perfekt)`, ro: ans },
+          say: { sv: vPerf(pi, v), ro: ans },
           hint: `Hjälpverbet är <i>a avea</i> i kortform – vilken form hör till <b>${PERS[pi].ro}</b>? Participet av ${v.inf} är <b>${v.part}</b>.`,
           why: `am · ai · a · am · ați · au + <b>${v.part}</b> → ${ro(ans)}`,
           distractors: pad3(AUX.map((a) => `${a} ${v.part}`), [`${AUX[pi]} ${v.inf.slice(2)}`], ans), forms: Object.fromEntries(AUX.map((a, i) => [`${a} ${v.part}`, `perfekt för ${PERS[i].ro}`])), target: `perfekt för ${PERS[pi].ro}`, stemHint: `Hjälpverbet stämmer – kolla participet. Participet av ${v.inf} är <b>${v.part}</b>.` };
@@ -251,9 +277,9 @@ const RO = (() => {
         const fem = n.g === "f" || (n.g === "n" && num === "pl");
         const forms = [a.ms, a.fs, a.mp, a.fp];
         return { q: "Sätt adjektivet i rätt form", big: `${nounForm} <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;</span>`,
-          sub: `(${a.ms}) · ${gl(n).split(/[,;]/)[0]}, ${gl(a).split(/[,;]/)[0]} · ${num === "sg" ? "singular" : "plural"}`,
+          sub: `(${a.ms}) · ${adjPhrase(a, n, num === "pl")}`,
           answer: ans, full: `${nounForm} ${ans}`, acceptFull: true,
-          say: { sv: `${gl(a).split(/[,;]/)[0]} + ${gl(n).split(/[,;]/)[0]} (${num === "sg" ? "singular" : "plural"})`, ro: `${nounForm} ${ans}` },
+          say: { sv: adjPhrase(a, n, num === "pl"), ro: `${nounForm} ${ans}` },
           hint: `Substantivet är <b>${GENUS[n.g]}</b>, <b>${num === "sg" ? "singular" : "plural"}</b>.${n.g === "n" ? " Neutrum: maskulint i singular, feminint i plural." : ""} Vilken av adjektivets fyra rutor är det?`,
           why: `${a.ms} har formerna ${forms.join(" · ")}. <b>${nounForm}</b> är ${fem ? "feminin" : "maskulin"} form i ${num === "sg" ? "singular" : "plural"} → ${ro(nounForm + " " + ans)}.`,
           ai: `Varför heter det "${nounForm} ${ans}" på rumänska? Förklara hur adjektivet "${a.ms}" böjs efter substantivet "${n.w}" (${GENUS[n.g]}, ${num === "sg" ? "singular" : "plural"}), och ge tre liknande exempel.`,
@@ -278,7 +304,7 @@ const RO = (() => {
         const cands = pl ? [n.f.pld + "r", n.f.pl + "lui", n.f.pl + "i", n.f.pld] : [n.f.sgd + "i", n.f.sgd + "lui", n.f.pl + "i", n.f.pl + "ei", n.f.sgd + "ui", n.f.pld];
         const svg = gl(n).split(/[,;]/)[0];
         return { q: pl ? "Genitiv-dativ plural av" : "Genitiv-dativ singular av", big: n.w, sub: `${ART[n.g]} ${n.w} · ${svg} · ${GENUS[n.g]}`,
-          answer: ans, say: { sv: `${svg} (till/av, ${pl ? "plural" : "bestämd singular"})`, ro: ans },
+          answer: ans, say: { sv: nGd(n, pl), ro: ans },
           ai: `Varför är genitiv-dativ ${pl ? "plural" : "singular"} av "${n.w}" på rumänska "${ans}"? Förklara hur genitiv-dativ bildas för ${GENUS_PL[n.g]} substantiv, när kasuset används i vardagsspråk, och ge tre exempel i meningar.`,
           hint: pl ? `Plural får alltid <b>-lor</b>. Utgå från pluralen <b>${n.f.pl}</b>.` : n.g === "f" ? `Feminint: utgå från <b>pluralen ${n.f.pl}</b> och lägg på -i.` : `${GENUS[n.g]}: utgå från bestämd form <b>${n.f.sgd}</b> och lägg på -ui.`,
           why: pl ? `Plural i genitiv-dativ: ${n.f.pl} + -lor → ${ro(ans)}.` : gdRule(n), distractors: pad3(cands, [n.w + "ului", n.w + "ei"], ans), forms: nounForms(n), target: pl ? "genitiv-dativ plural" : "genitiv-dativ singular", stemHint: n.g === "f" && !pl ? `Utgå från pluralen <b>${n.f.pl}</b> – stammen ska vara som där.` : STEM_HINT_N };
@@ -393,16 +419,16 @@ const RO = (() => {
         <p>Ett tal på egen hand (utan substantiv) heter <i>unu</i> och <i>doi/două</i>: <i>Câți? – Doi.</i> Med substantiv blir ett till artikeln <i>un/o</i>.</p>
         <p>Priser: <i>cincisprezece lei</i> (15 lei), <i>douăzeci de lei</i> (20 lei), <i>o sută de lei</i>. <i>Leu</i> (lejon) är valutan – plural <i>lei</i>.</p>
         <p>Klockan använder femininum: <i>ora două</i>, <i>la ora douăsprezece</i>, eftersom <i>oră</i> är feminint.</p>`,
-      pool: (L) => NOUNS(L).slice(0, 300).filter((n) => n.f.pl && !n.f.pl.includes(" ") && !NUM_SKIP.has(n.w)), key: (n) => n.w,
+      pool: (L) => NOUNS(L).slice(0, 300).filter((n) => n.f.pl && !n.f.pl.includes(" ") && !NUM_SKIP.has(n.w) && n.svf && n.svf.pl), key: (n) => n.w,
       gen(n) {
         const num = pick(NUM_POOL);
         const ans = numPhrase(num, n);
         const alt = { ...n, g: n.g === "f" ? "m" : "f" };
         const cands = [numPhrase(num, alt), num >= 20 && num !== 100 ? ans.replace(" de ", " ") : numPhrase(num < 20 ? num + 20 : num - 10 > 2 ? num - 10 : 3, n), num > 1 ? ans.replace(n.f.pl, n.w) : `${n.g === "f" ? "un" : "o"} ${n.w}`, numPhrase(num === 2 ? 12 : num === 12 ? 2 : num === 1 ? 2 : 1, n)];
         return { q: "Skriv talet med substantivet", big: `${num} ${n.w}`, sub: `${ART[n.g]} ${n.w} · ${gl(n)} · ${GENUS[n.g]}`, answer: ans,
-          say: { sv: `${num} + ${gl(n).split(/[,;]/)[0]}`, ro: ans },
+          say: { sv: nCount(num, n), ro: ans },
           hint: num === 1 ? `Ett är samma som obestämd artikel. Ordet är <b>${GENUS[n.g]}</b>.` : num === 2 || num === 12 ? `Två (och tolv) böjs efter genus. Ordet är <b>${GENUS[n.g]}</b>${n.g === "n" ? " – och neutrum är feminint i plural" : ""}. Och substantivet ska stå i plural: <b>${n.f.pl}</b>.` : num < 20 ? `Under 20: räkneord + plural, inget emellan. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` : `Från 20 behövs ett litet ord mellan räkneordet och pluralen (<b>${n.f.pl}</b>).${num % 10 === 1 || num % 10 === 2 ? " Slutsiffran böjs efter genus." : ""}`,
-          ai: `Varför säger man "${ans}" på rumänska för ${num} × "${n.w}" (${gl(n).split(/[,;]/)[0]})? Förklara räkneordens regler: un/o, doi/două, plural, och "de" från 20.`,
+          ai: `Varför säger man "${ans}" på rumänska för ${nCount(num, n)}? Förklara räkneordens regler: un/o, doi/două, plural, och "de" från 20.`,
           why: numWhy(num, n), distractors: pad3(cands, [`${num} ${n.f.pl}`], ans), target: "räkneord + substantiv", stemHint: `Räkneordet stämmer – kolla substantivets form. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` };
       } },
   );

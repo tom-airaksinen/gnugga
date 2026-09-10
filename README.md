@@ -30,7 +30,8 @@ Forskningsunderlaget finns i `docs/research-grammatikinlarning.md`, planen i `do
 | Räkneord | Räkneord + substantiv (un/o, doi/două, plural, de från 20) |
 
 Lexikon: 700 substantiv, 300 verb, 220 adjektiv med fullständiga böjningsformer, valda efter
-frekvens i undertexter. Svenska glosor för alla.
+frekvens i undertexter. Svenska glosor för alla – med svenska böjningsformer ur SALDO, så att
+ledtrådarna kan säga "flera timmar" och "jag gör" i stället för att appen böjer svenska på egen hand.
 
 ## Övningsformat
 
@@ -64,11 +65,14 @@ rader, skriver anmärkningar och kopierar dem som text (sparas i webbläsaren, i
 
 ```
 scripts/bygg-lexikon.py     kaikki.org (Wiktionary) + frekvenslista + scripts/raw/sv-gloss.json → data/ro/lexikon.json
+scripts/bygg-svenska.py     SALDO:s morfologi + scripts/raw/sv-morf.json → svenska böjningsformer (svf) i lexikon.json
 scripts/smoke.sh            rökprov i headless Chrome: spelar igenom pass, rapporterar JS-fel
 ```
 
-Rådata (`scripts/raw/kaikki-ro.jsonl`, 300 MB, och `ro_50k.txt`) ligger utanför git; URL:er i skriptets docstring.
-Licens för data: CC BY-SA 4.0, se `LICENSE-data.md`.
+Rådata (`scripts/raw/kaikki-ro.jsonl` 300 MB, `saldom.xml` 250 MB, `ro_50k.txt`) ligger utanför git;
+URL:er i skriptens docstrings. Handrättade svenska former ligger i `scripts/raw/sv-morf.json` (i git),
+eftersom SALDO har flera betydelser per ord och inte väljer åt oss: *bas* kan bli *basar* eller *baser*.
+Licens för data: CC BY-SA 4.0 respektive CC BY 4.0, se `LICENSE-data.md`.
 
 ## Publicera uppdateringar
 

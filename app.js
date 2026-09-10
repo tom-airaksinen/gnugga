@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v23";
+const APP_VERSION = "v24";
 // AI-stjärnor (samma som Flippas AI-knapp)
 const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
@@ -625,7 +625,7 @@ function renderHelp() {
     <div class="eyebrow" style="margin-top:6px">Om appen</div>
     <div class="set">
       <button class="set-row" id="help-cl"><span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Gnugga ${APP_VERSION} · senast ${CHANGELOG[0].date}</span></span><span class="chev">›</span></button>
-      <div class="set-row"><span class="set-body"><span class="set-t">Innehåll & källor</span><span class="set-d">${L.nouns.length} substantiv · ${L.verbs.length} verb · ${L.adjs.length} adjektiv. Böjningsformer från Wiktionary via kaikki.org (CC BY-SA 4.0). Frekvens: OpenSubtitles. Regler och svenska glosor skrivna för Gnugga.</span></span></div>
+      <div class="set-row"><span class="set-body"><span class="set-t">Innehåll & källor</span><span class="set-d">${L.nouns.length} substantiv · ${L.verbs.length} verb · ${L.adjs.length} adjektiv. Böjningsformer från Wiktionary via kaikki.org (CC BY-SA 4.0). Frekvens: OpenSubtitles. Svenska böjningsformer från SALDO, Språkbanken Text (CC BY 4.0). Regler och svenska glosor skrivna för Gnugga.</span></span></div>
       <div class="set-row"><span class="set-body"><span class="set-t">Grundtankarna i korthet</span><span class="set-d">Kort regel, sedan mest övning. Skriv eller säg formen, känn inte bara igen den. Blanda mönster när grunden sitter. Ledtråd före facit. Facit ur riktig data.</span></span></div>
     </div>
 `;

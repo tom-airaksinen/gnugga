@@ -34,8 +34,8 @@
 
 ## Språkligt innehåll (upptäckt 2026-09-10)
 - [x] Svenska ledtrådar böjdes maskinellt och blev fel ("flera timme", "jag göra")? → **Svar:** Lexikonet har bara grundformer, så appen slutade böja svenska. Nu visas grundform + etikett: "timme (plural)", "jag + göra (presens)". Naturlig svenska kräver svensk morfologi (t.ex. SALDO från Språkbanken, CC BY) i pipelinen (2026-09-10)
-- [ ] Ska vi hämta svenska böjningsformer (SALDO) så ledtrådarna kan bli "flera timmar" i stället för "timme (plural)"?
+- [x] Ska vi hämta svenska böjningsformer (SALDO) så ledtrådarna kan bli "flera timmar" i stället för "timme (plural)"? → **Svar:** Ja, gjort. `scripts/bygg-svenska.py` läser SALDO (CC BY 4.0) och lägger formerna i lexikonet: 699/700 substantiv, 300/300 verb, 219/220 adjektiv. Tvetydiga ord (bas = basar/baser) rättas för hand i `scripts/raw/sv-morf.json` (2026-09-10)
 - [ ] Adjektivövningen parar ihop slumpmässiga ord och ger orimliga fraser ("telefonisk fågel", "tät son"). Begränsa adjektivpoolen till egenskapsadjektiv?
-- [ ] Glosor som är fraser eller fragment ("telefon-", "slant; pl. pengar") ser skräpiga ut i övningarna. Städa i sv-gloss.json?
+- [x] Glosor som är fraser eller fragment ("telefon-", "slant; pl. pengar") ser skräpiga ut i övningarna. Städa i sv-gloss.json? → **Svar:** Delvis: bindestrecksglosorna är utbytta mot riktiga adjektiv (telefonisk, angränsande, luftburen, världsomfattande, favoriserad), "lipp" rättat till "läpp", och `seamă` blockerad som fraslemma (2026-09-10)
 - [ ] Dativmeningarna blir stela för tredje person ("Läraren säger honom / henne sanningen"). Egna svenska mallar per pronomen?
 - [ ] Pluralövningen böjer även mängdord (întuneric → întunericurile). Formerna finns i Wiktionary men känns konstiga – spärra även i plural?

@@ -1,0 +1,201 @@
+{
+ "_om": "Handrättade svenska former som vinner över SALDO. Nycklarna är de rumänska lemmana.",
+ "_varfor": "SALDO har flera betydelser per ord och väljer inte åt oss: bas kan bli basar (instrument) eller baser (grund). Här styr den rumänska betydelsen.",
+ "nouns": {
+  "echipă": {
+   "sg": "lag",
+   "def": "laget",
+   "defg": "lagets",
+   "pl": "lag",
+   "pldef": "lagen",
+   "pldefg": "lagens",
+   "g": "n"
+  },
+  "bază": {
+   "sg": "bas",
+   "def": "basen",
+   "defg": "basens",
+   "pl": "baser",
+   "pldef": "baserna",
+   "pldefg": "basernas",
+   "g": "u"
+  },
+  "formă": {
+   "sg": "form",
+   "def": "formen",
+   "defg": "formens",
+   "pl": "former",
+   "pldef": "formerna",
+   "pldefg": "formernas",
+   "g": "u"
+  },
+  "insulă": {
+   "sg": "ö",
+   "def": "ön",
+   "defg": "öns",
+   "pl": "öar",
+   "pldef": "öarna",
+   "pldefg": "öarnas",
+   "g": "u"
+  },
+  "bal": {
+   "sg": "bal",
+   "def": "balen",
+   "defg": "balens",
+   "pl": "baler",
+   "pldef": "balerna",
+   "pldefg": "balernas",
+   "g": "u"
+  },
+  "dată": {
+   "sg": "gång",
+   "def": "gången",
+   "defg": "gångens",
+   "pl": "gånger",
+   "pldef": "gångerna",
+   "pldefg": "gångernas",
+   "g": "u"
+  },
+  "foc": {
+   "sg": "eld",
+   "def": "elden",
+   "defg": "eldens",
+   "pl": "eldar",
+   "pldef": "eldarna",
+   "pldefg": "eldarnas",
+   "g": "u"
+  },
+  "soare": {
+   "sg": "sol",
+   "def": "solen",
+   "defg": "solens",
+   "pl": "solar",
+   "pldef": "solarna",
+   "pldefg": "solarnas",
+   "g": "u"
+  },
+  "control": {
+   "sg": "kontroll",
+   "def": "kontrollen",
+   "defg": "kontrollens",
+   "pl": "kontroller",
+   "pldef": "kontrollerna",
+   "pldefg": "kontrollernas",
+   "g": "u"
+  },
+  "bere": {
+   "sg": "öl",
+   "def": "ölen",
+   "defg": "ölens",
+   "g": "u"
+  },
+  "ceai": {
+   "sg": "te",
+   "def": "teet",
+   "defg": "teets",
+   "g": "n"
+  },
+  "lemn": {
+   "sg": "trä",
+   "def": "träet",
+   "defg": "träets",
+   "g": "n"
+  },
+  "presă": {
+   "sg": "press",
+   "def": "pressen",
+   "defg": "pressens",
+   "g": "u"
+  },
+  "cafea": {
+   "sg": "kaffe",
+   "def": "kaffet",
+   "defg": "kaffets",
+   "g": "n"
+  },
+  "bătrân": {
+   "sg": "gammal man",
+   "def": "den gamle mannen",
+   "defg": "den gamle mannens",
+   "pl": "gamla män",
+   "pldef": "de gamla männen",
+   "pldefg": "de gamla männens",
+   "g": "u"
+  },
+  "mort": {
+   "sg": "död person",
+   "def": "den döda personen",
+   "defg": "den döda personens",
+   "pl": "döda personer",
+   "pldef": "de döda personerna",
+   "pldefg": "de döda personernas",
+   "g": "u"
+  },
+  "sărac": {
+   "sg": "fattig person",
+   "def": "den fattiga personen",
+   "defg": "den fattiga personens",
+   "pl": "fattiga personer",
+   "pldef": "de fattiga personerna",
+   "pldefg": "de fattiga personernas",
+   "g": "u"
+  },
+  "suspect": {
+   "sg": "misstänkt",
+   "def": "den misstänkte",
+   "defg": "den misstänktes",
+   "pl": "misstänkta",
+   "pldef": "de misstänkta",
+   "pldefg": "de misstänktas",
+   "g": "u"
+  },
+  "tricou": {
+   "sg": "t-shirt",
+   "def": "t-shirten",
+   "defg": "t-shirtens",
+   "pl": "t-shirtar",
+   "pldef": "t-shirtarna",
+   "pldefg": "t-shirtarnas",
+   "g": "u"
+  }
+ },
+ "verbs": {
+  "a căsători": {
+   "inf": "gifta sig",
+   "pres": "gifter sig",
+   "sup": "gift sig"
+  },
+  "a comporta": {
+   "inf": "bete sig",
+   "pres": "beter sig",
+   "sup": "betett sig"
+  }
+ },
+ "adjs": {
+  "anterior": {
+   "u": "tidigare",
+   "n": "tidigare",
+   "pl": "tidigare"
+  },
+  "minor": {
+   "u": "mindre",
+   "n": "mindre",
+   "pl": "mindre"
+  },
+  "recent": {
+   "u": "nylig",
+   "n": "nyligt",
+   "pl": "nyliga"
+  },
+  "telefonic": {
+   "u": "telefonisk",
+   "n": "telefoniskt",
+   "pl": "telefoniska"
+  },
+  "favorit": {
+   "u": "favoriserad",
+   "n": "favoriserat",
+   "pl": "favoriserade"
+  }
+ }
+}
