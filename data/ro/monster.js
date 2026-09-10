@@ -43,6 +43,15 @@ const RO = (() => {
   const uniq = (arr, not) => { const out = []; for (const x of arr) { if (x && x !== not && !out.includes(x)) out.push(x); } return out; };
   const ro = (s) => `<span class="ro">${s}</span>`;
   const gl = (x) => x.sv || x.en || "";
+
+  /* Ord som bara lever i fasta uttryck – de duger inte som drillord ("jur" finns bara i "în jur"). */
+  const NOUN_SKIP = new Set(["jur", "oară"]);
+  const NOUNS = (L) => L.nouns.filter((n) => !NOUN_SKIP.has(n.w));
+  /* Ord man inte räknar: mängdord (blod, musik) och talord (hundra, miljon → "1 hundra" blir nonsens). */
+  const NUM_SKIP = new Set(["sută", "milion", "mie", "miliard", "sânge", "dragoste", "iubire", "milă", "frică",
+    "muzică", "mâncare", "păr", "pământ", "întuneric", "aer", "curaj", "noroc", "foame", "sete", "libertate",
+    "fericire", "liniște", "vreme", "muncă", "energie", "putere", "praf", "ceață", "zăpadă", "ploaie", "lapte",
+    "cafea", "vin", "bere", "ulei", "sare", "zahăr", "carne", "aur", "argint", "fier", "lemn", "hârtie"]);
   const pad3 = (cands, fallback, ans) => { const c = uniq(cands, ans); let i = 0; while (c.length < 3 && i < fallback.length) { if (fallback[i] !== ans && !c.includes(fallback[i])) c.push(fallback[i]); i++; } return shuffle(c).slice(0, 3); };
 
   /* ---- substantiv: regeltexter per ord ---- */
@@ -92,7 +101,9 @@ const RO = (() => {
   const STEM_HINT_N = "Kolla stammen: växlar en vokal (som fată → fete, masă → mese)?";
   const paradigm = (v, pi) => v.pres.map((f, i) => i === pi ? ro(f) : f).join(" · ");
   const svVerb = (v) => gl(v).split(/[,;(]/)[0].trim();
-  const svPers = (pi, v) => `${PERS[pi].sv} ${svVerb(v)}`;
+  /* Svenska glosor finns bara i grundform (infinitiv/singular). Böj dem INTE här – "jag göra"
+     och "flera timme" blir fel. Visa grundformen + en etikett för formen som efterfrågas. */
+  const svPers = (pi, v) => `${PERS[pi].sv} + ${svVerb(v)} (presens)`;
 
   /* ---- mönster ---- */
   const PATTERNS = [
@@ -104,7 +115,7 @@ const RO = (() => {
       more: `<p>Lär in genus tillsammans med ordet – artikeln avgörs av det. Flippa-tips: skriv <i>casă [f]</i> så syns genuset på kortet utan att läsas upp.</p>
         <p><b>Neutrum</b> är rumänskans specialitet: ordet beter sig som maskulint i singular (<i>un oraș, orașul</i>) men som feminint i plural (<i>două orașe, orașele</i>).</p>
         <p>Bestämd form används oftare än i svenskan. Efter <i>cu</i> ("med") står ordet ofta bestämt, men efter <i>la, în, pe</i> obestämt om inget bestämmer det närmare: <i>la hotel</i>, men <i>la hotelul nostru</i>.</p>`,
-      pool: (L) => L.nouns,
+      pool: (L) => NOUNS(L),
       key: (n) => n.w,
       gen(n) {
         const w = n.w, st = w.slice(0, -1);
@@ -124,13 +135,13 @@ const RO = (() => {
       examples: [["casă", "case", "hus (flera)"], ["băiat", "băieți", "pojkar"], ["tren", "trenuri", "tåg (flera)"]],
       more: `<p>Vokalväxlingen (<i>a → e</i>, <i>oa → o</i>, <i>ă → e</i>) är regelbunden men måste nötas per ord. Lär in pluralen som en del av glosan, som tyskans <i>der Mann, die Männer</i>.</p>
         <p>Räkneord: efter 1 står singular (<i>un tren</i>), efter 2–19 plural (<i>două trenuri</i>), från 20 kommer <i>de</i> emellan (<i>douăzeci de trenuri</i>).</p>`,
-      pool: (L) => L.nouns,
+      pool: (L) => NOUNS(L),
       key: (n) => n.w,
       gen(n) {
         const w = n.w, st = w.slice(0, -1);
         const cands = [st + "e", st + "i", w + "uri", w + "e", w + "i", st + "uri"].filter((x) => x !== w);
         return { q: "Plural av", big: w, sub: `${ART[n.g]} ${w} · ${gl(n)}`, answer: n.f.pl,
-          say: { sv: `flera ${gl(n).split(/[,;]/)[0]}`, ro: n.f.pl },
+          say: { sv: `${gl(n).split(/[,;]/)[0]} (plural)`, ro: n.f.pl },
           hint: `Ordet är <b>${GENUS[n.g]}</b>. ${n.g === "f" ? "Feminina får -e eller -i." : n.g === "m" ? "Maskulina får -i." : "Neutrum får -e eller -uri."}${vowelShift(n) ? " Och kolla om en vokal i stammen växlar." : ""}`,
           why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl), forms: nounForms(n), target: "obestämd plural", stemHint: STEM_HINT_N };
       } },
@@ -143,7 +154,7 @@ const RO = (() => {
         ${ro("-i (fem.) → -ile")} (cărți → cărțile, țări → țările)`,
       examples: [["case", "casele", "husen"], ["băieți", "băieții", "pojkarna"], ["trenuri", "trenurile", "tågen"]],
       more: `<p>Två steg: först rätt plural, sedan rätt artikel. Kan du pluralen är bestämd plural nästan mekanisk – därför kommer detta mönster efter Plural.</p>`,
-      pool: (L) => L.nouns,
+      pool: (L) => NOUNS(L),
       key: (n) => n.w,
       gen(n) {
         const p = n.f.pl;
@@ -215,7 +226,7 @@ const RO = (() => {
         if (v.inf === "a trebui") pi = 2;
         const ans = `${AUX[pi]} ${v.part}`;
         return { q: "Perfekt av", big: v.inf, sub: persLabel(pi), gloss: gl(v), answer: ans,
-          say: { sv: `${PERS[pi].sv} har ${svVerb(v)} (perfekt)`, ro: ans },
+          say: { sv: `${PERS[pi].sv} + ${svVerb(v)} (perfekt)`, ro: ans },
           hint: `Hjälpverbet är <i>a avea</i> i kortform – vilken form hör till <b>${PERS[pi].ro}</b>? Participet av ${v.inf} är <b>${v.part}</b>.`,
           why: `am · ai · a · am · ați · au + <b>${v.part}</b> → ${ro(ans)}`,
           distractors: pad3(AUX.map((a) => `${a} ${v.part}`), [`${AUX[pi]} ${v.inf.slice(2)}`], ans), forms: Object.fromEntries(AUX.map((a, i) => [`${a} ${v.part}`, `perfekt för ${PERS[i].ro}`])), target: `perfekt för ${PERS[pi].ro}`, stemHint: `Hjälpverbet stämmer – kolla participet. Participet av ${v.inf} är <b>${v.part}</b>.` };
@@ -233,16 +244,16 @@ const RO = (() => {
       pool: (L) => L.adjs,
       key: (a) => a.ms,
       gen(a, L) {
-        const n = pick(L.nouns.slice(0, 250));
+        const n = pick(NOUNS(L).slice(0, 250));
         const num = Math.random() < .5 ? "sg" : "pl";
         const nounForm = num === "sg" ? n.w : n.f.pl;
         const ans = adjForm(a, n.g, num);
         const fem = n.g === "f" || (n.g === "n" && num === "pl");
         const forms = [a.ms, a.fs, a.mp, a.fp];
         return { q: "Sätt adjektivet i rätt form", big: `${nounForm} <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;</span>`,
-          sub: `(${a.ms}) · ${num === "sg" ? "" : "flera "}${gl(n).split(/[,;]/)[0]}, ${gl(a).split(/[,;]/)[0]}`,
+          sub: `(${a.ms}) · ${gl(n).split(/[,;]/)[0]}, ${gl(a).split(/[,;]/)[0]} · ${num === "sg" ? "singular" : "plural"}`,
           answer: ans, full: `${nounForm} ${ans}`, acceptFull: true,
-          say: { sv: `${num === "sg" ? "" : "flera "}${gl(a).split(/[,;]/)[0]} ${gl(n).split(/[,;]/)[0]}`, ro: `${nounForm} ${ans}` },
+          say: { sv: `${gl(a).split(/[,;]/)[0]} + ${gl(n).split(/[,;]/)[0]} (${num === "sg" ? "singular" : "plural"})`, ro: `${nounForm} ${ans}` },
           hint: `Substantivet är <b>${GENUS[n.g]}</b>, <b>${num === "sg" ? "singular" : "plural"}</b>.${n.g === "n" ? " Neutrum: maskulint i singular, feminint i plural." : ""} Vilken av adjektivets fyra rutor är det?`,
           why: `${a.ms} har formerna ${forms.join(" · ")}. <b>${nounForm}</b> är ${fem ? "feminin" : "maskulin"} form i ${num === "sg" ? "singular" : "plural"} → ${ro(nounForm + " " + ans)}.`,
           ai: `Varför heter det "${nounForm} ${ans}" på rumänska? Förklara hur adjektivet "${a.ms}" böjs efter substantivet "${n.w}" (${GENUS[n.g]}, ${num === "sg" ? "singular" : "plural"}), och ge tre liknande exempel.`,
@@ -258,7 +269,7 @@ const RO = (() => {
       examples: [["băiat", "băiatului", "pojkens / till pojken"], ["casă", "casei", "husets / till huset"], ["case", "caselor", "husens / till husen"]],
       more: `<p>På en resa kommer du långt med <i>la</i> + bestämd form ("till") och <i>lui/ei</i>. Men skyltar, menyer och namn använder genitiv hela tiden: <i>Piața Unirii</i> (Enighetens torg), <i>Muzeul Satului</i> (Byns museum).</p>
         <p>Före ett namn eller ett obestämt ord används <i>lui</i> i stället: <i>cartea lui Ion</i>, <i>casa lui Maria</i> (i talspråk).</p>`,
-      pool: (L) => L.nouns.filter((n) => n.f.gsd && n.f.gpd),
+      pool: (L) => NOUNS(L).filter((n) => n.f.gsd && n.f.gpd),
       key: (n) => n.w,
       gen(n) {
         const pl = Math.random() < .3;
@@ -267,7 +278,7 @@ const RO = (() => {
         const cands = pl ? [n.f.pld + "r", n.f.pl + "lui", n.f.pl + "i", n.f.pld] : [n.f.sgd + "i", n.f.sgd + "lui", n.f.pl + "i", n.f.pl + "ei", n.f.sgd + "ui", n.f.pld];
         const svg = gl(n).split(/[,;]/)[0];
         return { q: pl ? "Genitiv-dativ plural av" : "Genitiv-dativ singular av", big: n.w, sub: `${ART[n.g]} ${n.w} · ${svg} · ${GENUS[n.g]}`,
-          answer: ans, say: { sv: `${pl ? "till/av flera " + svg : "till/av " + svg + " (bestämd)"}`, ro: ans },
+          answer: ans, say: { sv: `${svg} (till/av, ${pl ? "plural" : "bestämd singular"})`, ro: ans },
           ai: `Varför är genitiv-dativ ${pl ? "plural" : "singular"} av "${n.w}" på rumänska "${ans}"? Förklara hur genitiv-dativ bildas för ${GENUS_PL[n.g]} substantiv, när kasuset används i vardagsspråk, och ge tre exempel i meningar.`,
           hint: pl ? `Plural får alltid <b>-lor</b>. Utgå från pluralen <b>${n.f.pl}</b>.` : n.g === "f" ? `Feminint: utgå från <b>pluralen ${n.f.pl}</b> och lägg på -i.` : `${GENUS[n.g]}: utgå från bestämd form <b>${n.f.sgd}</b> och lägg på -ui.`,
           why: pl ? `Plural i genitiv-dativ: ${n.f.pl} + -lor → ${ro(ans)}.` : gdRule(n), distractors: pad3(cands, [n.w + "ului", n.w + "ei"], ans), forms: nounForms(n), target: pl ? "genitiv-dativ plural" : "genitiv-dativ singular", stemHint: n.g === "f" && !pl ? `Utgå från pluralen <b>${n.f.pl}</b> – stammen ska vara som där.` : STEM_HINT_N };
@@ -382,16 +393,16 @@ const RO = (() => {
         <p>Ett tal på egen hand (utan substantiv) heter <i>unu</i> och <i>doi/două</i>: <i>Câți? – Doi.</i> Med substantiv blir ett till artikeln <i>un/o</i>.</p>
         <p>Priser: <i>cincisprezece lei</i> (15 lei), <i>douăzeci de lei</i> (20 lei), <i>o sută de lei</i>. <i>Leu</i> (lejon) är valutan – plural <i>lei</i>.</p>
         <p>Klockan använder femininum: <i>ora două</i>, <i>la ora douăsprezece</i>, eftersom <i>oră</i> är feminint.</p>`,
-      pool: (L) => L.nouns.slice(0, 250).filter((n) => n.f.pl && !n.f.pl.includes(" ")), key: (n) => n.w,
+      pool: (L) => NOUNS(L).slice(0, 300).filter((n) => n.f.pl && !n.f.pl.includes(" ") && !NUM_SKIP.has(n.w)), key: (n) => n.w,
       gen(n) {
         const num = pick(NUM_POOL);
         const ans = numPhrase(num, n);
         const alt = { ...n, g: n.g === "f" ? "m" : "f" };
         const cands = [numPhrase(num, alt), num >= 20 && num !== 100 ? ans.replace(" de ", " ") : numPhrase(num < 20 ? num + 20 : num - 10 > 2 ? num - 10 : 3, n), num > 1 ? ans.replace(n.f.pl, n.w) : `${n.g === "f" ? "un" : "o"} ${n.w}`, numPhrase(num === 2 ? 12 : num === 12 ? 2 : num === 1 ? 2 : 1, n)];
         return { q: "Skriv talet med substantivet", big: `${num} ${n.w}`, sub: `${ART[n.g]} ${n.w} · ${gl(n)} · ${GENUS[n.g]}`, answer: ans,
-          say: { sv: `${num} ${gl(n).split(/[,;]/)[0]}`, ro: ans },
+          say: { sv: `${num} + ${gl(n).split(/[,;]/)[0]}`, ro: ans },
           hint: num === 1 ? `Ett är samma som obestämd artikel. Ordet är <b>${GENUS[n.g]}</b>.` : num === 2 || num === 12 ? `Två (och tolv) böjs efter genus. Ordet är <b>${GENUS[n.g]}</b>${n.g === "n" ? " – och neutrum är feminint i plural" : ""}. Och substantivet ska stå i plural: <b>${n.f.pl}</b>.` : num < 20 ? `Under 20: räkneord + plural, inget emellan. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` : `Från 20 behövs ett litet ord mellan räkneordet och pluralen (<b>${n.f.pl}</b>).${num % 10 === 1 || num % 10 === 2 ? " Slutsiffran böjs efter genus." : ""}`,
-          ai: `Varför säger man "${ans}" för ${num} ${gl(n).split(/[,;]/)[0]} på rumänska? Förklara räkneordens regler: un/o, doi/două, plural, och "de" från 20.`,
+          ai: `Varför säger man "${ans}" på rumänska för ${num} × "${n.w}" (${gl(n).split(/[,;]/)[0]})? Förklara räkneordens regler: un/o, doi/două, plural, och "de" från 20.`,
           why: numWhy(num, n), distractors: pad3(cands, [`${num} ${n.f.pl}`], ans), target: "räkneord + substantiv", stemHint: `Räkneordet stämmer – kolla substantivets form. Pluralen av ${n.w} är <b>${n.f.pl}</b>.` };
       } },
   );

@@ -9,8 +9,8 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v22";
-// AI-stjärnor (samma som Flippas "AI-kontext")
+const APP_VERSION = "v23";
+// AI-stjärnor (samma som Flippas AI-knapp)
 const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 const LANG = window.GNUGGA_LANG;
@@ -421,7 +421,7 @@ function diagnose(input, ex) {
   return null; // → mönstrets ledtråd
 }
 
-/* ---- AI-kontext: öppnar Googles AI-läge med en färdig fråga om just den här övningen
+/* ---- AI-förklaring: öppnar Googles AI-läge med en färdig fråga om just den här övningen
    (som Flippa). Dynamiskt komplement till den statiska regeln. ---- */
 function aiQuestion(ex) {
   if (ex.ai) return ex.ai;
@@ -433,7 +433,7 @@ function openExternal(url) {
   try { const l = document.createElement("a"); l.href = url; l.target = "_blank"; l.rel = "noopener noreferrer"; l.style.display = "none"; document.body.appendChild(l); l.click(); setTimeout(() => l.remove(), 0); }
   catch (_) { window.open(url, "_blank"); }
 }
-const aiBtn = (q, id) => `<button class="aibtn" id="${id}" data-q="${esc(q)}">${AI_STARS} AI-kontext</button>`;
+const aiBtn = (q, id) => `<button class="aibtn" id="${id}" data-q="${esc(q)}">${AI_STARS} AI-förklaring</button>`;
 function bindAi(root) { $$(".aibtn", root).forEach((b) => b.addEventListener("click", () => { track("ai-kontext"); openExternal(aiUrl(b.dataset.q)); })); }
 
 /* ---- Bedömning + feedback i två steg ---- */

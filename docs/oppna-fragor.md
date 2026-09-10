@@ -31,3 +31,11 @@
 - [ ] Alternativa former: `e` för `este` accepteras; fler behövs? (t.ex. `mânc/mănânc`, `căpșuni/căpșune`)
 - [ ] Konjunktiv med `să` (sub3 finns redan i lexikonet) och framtid `o să` som mönster 9–10.
 - [ ] Kvalitetssäkring av rumänskan: granskningssidan (`granskning.html`) skickad till någon? Anmärkningar tillbaka → rätta i `sv-gloss.json`, `monster.js`, blocklistan i pipelinen.
+
+## Språkligt innehåll (upptäckt 2026-09-10)
+- [x] Svenska ledtrådar böjdes maskinellt och blev fel ("flera timme", "jag göra")? → **Svar:** Lexikonet har bara grundformer, så appen slutade böja svenska. Nu visas grundform + etikett: "timme (plural)", "jag + göra (presens)". Naturlig svenska kräver svensk morfologi (t.ex. SALDO från Språkbanken, CC BY) i pipelinen (2026-09-10)
+- [ ] Ska vi hämta svenska böjningsformer (SALDO) så ledtrådarna kan bli "flera timmar" i stället för "timme (plural)"?
+- [ ] Adjektivövningen parar ihop slumpmässiga ord och ger orimliga fraser ("telefonisk fågel", "tät son"). Begränsa adjektivpoolen till egenskapsadjektiv?
+- [ ] Glosor som är fraser eller fragment ("telefon-", "slant; pl. pengar") ser skräpiga ut i övningarna. Städa i sv-gloss.json?
+- [ ] Dativmeningarna blir stela för tredje person ("Läraren säger honom / henne sanningen"). Egna svenska mallar per pronomen?
+- [ ] Pluralövningen böjer även mängdord (întuneric → întunericurile). Formerna finns i Wiktionary men känns konstiga – spärra även i plural?

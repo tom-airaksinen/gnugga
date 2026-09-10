@@ -47,7 +47,8 @@ ADJ_PARTICIP_OK = {"mort", "trecut", "deschis", "închis", "obosit", "căsători
                    "îndrăgostit", "speriat", "rezervat", "fript", "copt", "prăjit", "umplut", "răcit"}
 
 # Homografer/varianter som frekvenslistan ändå lyfter fram fel
-BLOCK = {"fie", "ie", "ziuă", "ara", "par", "car", "mai", "dar", "mină", "undă", "eră", "voie", "și", "in",
+BLOCK = {"jur", "oară",  # lever bara i fasta uttryck (în jur, prima oară) – duger inte som drillord
+         "fie", "ie", "ziuă", "ara", "par", "car", "mai", "dar", "mină", "undă", "eră", "voie", "și", "in",
          "mi", "do", "mic", "mică", "haină", "ală", "problem", "imagină", "steauă", "suroră", "politie", "arat",
          "scap", "sef", "actă", "stelă", "fost", "cec", "următor", "strigă", "normală", "dragă", "prim", "accept",
          "rahat", "penis", "porcărie", "nenorocit", "nenorocită", "sex", "sân", "vită", "tară", "moară", "duce",

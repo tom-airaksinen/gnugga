@@ -9,6 +9,11 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "10 september 2026", ver: "v23", items: [
+    { t: "Bort med felaktig svenska i övningarna: det stod \"flera timme\" och \"jag göra\". Nu visas grundformen med en etikett för formen som efterfrågas, till exempel \"timme (plural)\" och \"jag + göra (presens)\".", type: "fixed" },
+    { t: "Knappen heter AI-förklaring i stället för AI-kontext.", type: "improved" },
+    { t: "Räkneordsövningen räknar inte längre sådant man inte räknar (blod, musik) eller talord (\"1 hundra\").", type: "fixed" },
+  ] },
   { date: "9 september 2026", ver: "v22", items: [
     { t: "Nivåerna heter nu Nytt → Övat → Lärt → Automatiskt: Övat betyder att du tränat, Lärt att det sitter.", type: "improved", hi: true, ico: "🎯", desc: "Procent rätt räknas på dina senaste 20 svar i mönstret, så gamla fel drar inte ner dig när du kan det nu." },
     { t: "Startsidan är renare: veckoöversikten (\"3 av 7 dagar\") finns nu bara under Statistik.", type: "improved" },
