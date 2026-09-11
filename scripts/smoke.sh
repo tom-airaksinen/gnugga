@@ -54,6 +54,13 @@ test = '''<script>
     $("#done-home").click();
     openPattern("adj"); out.push("pattern: " + $("#p-title").textContent + " | " + $$("#p-body .card").length + " cards | ai=" + ($("#p-ai") ? $("#p-ai").dataset.q.slice(0, 60) : "SAKNAS"));
     for (const p of PATTERNS) { const ex = p.gen(chooseLemma(p), L); out.push("ai " + p.id + ": " + aiQuestion(ex)); }
+    { const ex = PATTERNS[0].gen(chooseLemma(PATTERNS[0]), L);
+      const q = aiQuestion(ex, wrongPhrase({ type: "boj", lastInput: "xyz", ex }));
+      out.push("ai med felsvar: " + (q.includes('Jag svarade "xyz"') && q.includes("varför mitt svar blev fel") ? "OK" : "SAKNAS – " + q));
+      const qr = aiQuestion(ex, wrongPhrase({ type: "rattfel", said: true, truth: false, shown: "fel-form", ex }));
+      out.push("ai rätt-eller-fel: " + (qr.includes('Jag trodde att "fel-form" var rätt form') ? "OK" : "SAKNAS – " + qr));
+      const qc = aiQuestion(ex, wrongPhrase({ type: "boj", lastInput: ex.answer, ex }));
+      out.push("ai utan felsvar: " + (qc.includes("Jag svarade") ? "FEL – citerar rätt svar" : "OK")); }
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
     renderHelp(); out.push("help: " + $$("#help-body details").length + " sections, om-rader=" + $$("#help-body .set-row").length);
     renderStats(); out.push("stats: kpi=" + $$("#stats-body .kpi").length + " heat=" + $$("#stats-body .heat .d").length + " weak=" + $$("#stats-body .wl span").length + " err=" + $$("#stats-body .flist div").length + " | " + $("#stats-body .st-hero .cap").textContent);

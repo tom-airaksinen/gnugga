@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v26";
+const APP_VERSION = "v27";
 // AI-stjärnor (samma som Flippas AI-knapp)
 const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
@@ -330,6 +330,7 @@ function renderValj(p, ex) {
   st.innerHTML = taskHtml(ex) + `<div class="answer"><div class="opts">${opts.map((o) => `<button class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
   $$(".opt").forEach((b) => b.addEventListener("click", () => {
     const ok = b.dataset.v === ex.answer;
+    S.cur.lastInput = b.dataset.v;
     $$(".opt").forEach((o) => { o.disabled = true; if (o.dataset.v === ex.answer) o.classList.add("ok"); else if (o === b) o.classList.add("bad"); else o.classList.add("dim"); });
     grade(ok, { final: true });
   }));
@@ -379,6 +380,7 @@ function renderRattfel(p, ex) {
     <div class="answer"><div class="timer run"><i></i></div><div class="tf"><button id="tf-y" class="yes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Rätt</button><button id="tf-n" class="no"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg> Fel</button></div></div>`;
   const answer = (said) => {
     clearTimer(); const ok = said === truth;
+    S.cur.said = said;
     $("#tf-y").disabled = $("#tf-n").disabled = true;
     $(truth ? "#tf-y" : "#tf-n").classList.add("ok"); if (!ok && said !== null) $(said ? "#tf-y" : "#tf-n").classList.add("bad");
     grade(ok, { final: true, timeout: said === null });
@@ -425,10 +427,19 @@ function diagnose(input, ex) {
 
 /* ---- AI-förklaring: öppnar Googles AI-läge med en färdig fråga om just den här övningen
    (som Flippa). Dynamiskt komplement till den statiska regeln. ---- */
-function aiQuestion(ex) {
-  if (ex.ai) return ex.ai;
+function aiQuestion(ex, wrong) {
+  if (ex.ai) return ex.ai + (wrong ? ` ${wrong}. Förklara också varför mitt svar blev fel.` : "");
   const base = plain(ex.big);
-  return `${ex.q} "${base}"${ex.sub ? ` (${ex.sub})` : ""} på ${LANG.name.toLowerCase()} är "${ex.full || ex.answer}" – varför? Förklara regeln bakom, vanliga undantag, och ge tre liknande exempel.`;
+  return `${ex.q} "${base}"${ex.sub ? ` (${ex.sub})` : ""} på ${LANG.name.toLowerCase()} är "${ex.full || ex.answer}" – varför?${wrong ? ` ${wrong}.` : ""} Förklara regeln bakom,${wrong ? " varför mitt svar blev fel," : ""} vanliga undantag, och ge tre liknande exempel.`;
+}
+/* Det egna felsvaret, formulerat för AI-frågan. Tomt när svaret inte går att citera
+   (Säg det bedömer man själv, och tiden kan ta slut i Rätt eller fel). */
+function wrongPhrase(c) {
+  if ((c.type === "boj" || c.type === "valj") && c.lastInput && norm(c.lastInput) !== norm(c.ex.answer))
+    return `Jag svarade "${c.lastInput}"`;
+  if (c.type === "rattfel" && c.said === true && !c.truth) return `Jag trodde att "${c.shown}" var rätt form`;
+  if (c.type === "rattfel" && c.said === false && c.truth) return `Jag trodde att "${c.shown}" var fel form`;
+  return "";
 }
 function aiUrl(q) { return `https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`; }
 function openExternal(url) {
@@ -469,7 +480,7 @@ function grade(ok, { final, silent, timeout } = {}) {
     S.log.push({ pid: c.p.id, ok: false });
     const head = timeout ? "Tiden gick ut" : c.type === "rattfel" ? (c.truth ? "Den var faktiskt rätt" : "Den var fel") : "Inte den här gången";
     showFb("bad", `<div class="h">✗ ${head}</div><div class="ans">${esc(full)} <button class="spk" data-say="${esc(c.ex.say.ro)}">🔊</button></div>${c.type === "boj" && c.lastInput && c.diag && stripDia(norm(c.lastInput)) === stripDia(norm(c.ex.answer)) ? `<div class="why muted small">Du skrev <b>${esc(c.lastInput)}</b> – bara diakriterna skilde.</div>` : ""}<div class="why">${c.ex.why}</div>
-      <div class="links"><button class="linkish" id="fb-rule">Visa hela regeln</button>${aiBtn(aiQuestion(c.ex), "fb-ai")}</div><div class="acts"><button class="cta bad" id="fb-next">Fortsätt</button></div>`);
+      <div class="links"><button class="linkish" id="fb-rule">Visa hela regeln</button>${aiBtn(aiQuestion(c.ex, wrongPhrase(c)), "fb-ai")}</div><div class="acts"><button class="cta bad" id="fb-next">Fortsätt</button></div>`);
     $("#fb-rule").addEventListener("click", () => { $("#fb .why").innerHTML = c.p.rule; $("#fb-rule").remove(); });
   }
   $("#fb-next").addEventListener("click", next);

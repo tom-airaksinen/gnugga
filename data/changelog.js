@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "11 september 2026", ver: "v27", items: [
+    { t: "AI-förklaringen efter ett fel tar med vad du faktiskt svarade, så du får veta varför just ditt svar blev fel.", type: "improved" },
+  ] },
   { date: "10 september 2026", ver: "v26", items: [
     { t: "Skrollningen studsar mjukt i slutet, som i Flippa. Rubriken ligger nu still medan innehållet skrollar.", type: "improved" },
   ] },
