@@ -78,8 +78,9 @@ Licens för data: CC BY-SA 4.0 respektive CC BY 4.0, se `LICENSE-data.md`.
 
 1. Bumpa `APP_VERSION` i `app.js` och `CACHE` i `sw.js`.
 2. Användarsynlig ändring? Lägg en post överst i `data/changelog.js`.
-3. `bash scripts/smoke.sh` → inga JS-fel.
-4. `git add -A && git commit -m "..." && git push` – GitHub Pages uppdateras automatiskt.
+3. Ändrar det *hur man använder appen*? Uppdatera Hjälp (`renderHelp()` i `app.js`).
+4. `bash scripts/smoke.sh` → inga JS-fel.
+5. `git add -A && git commit -m "..." && git push` – GitHub Pages uppdateras automatiskt.
 
 ## Mappar
 

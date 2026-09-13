@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v28", items: [
+    { t: "Nytt hjälpavsnitt \"Exakt hur funkar det?\" som förklarar förfallna, lådorna, hur ord väljs och när ett nytt mönster öppnas.", type: "new", hi: true, ico: "🧭", desc: "Plus två luckor täppta: AI-förklaringen och att framstegen sparas per enhet." },
+  ] },
   { date: "11 september 2026", ver: "v27", items: [
     { t: "AI-förklaringen efter ett fel tar med vad du faktiskt svarade, så du får veta varför just ditt svar blev fel.", type: "improved" },
   ] },
