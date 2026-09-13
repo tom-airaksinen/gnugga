@@ -25,7 +25,7 @@
 
 ## Efter v1 (nytt 2026-09-07)
 - [ ] GoatCounter för Gnugga (egen sajt gnugga.goatcounter.com) när appen delas med andra. `track()` finns som stubb i app.js.
-- [ ] Flippa-koppling: länk "Gnugga grammatiken" från rumänska ämnet, och prioritera Flippa-orden i Gnuggas lemma-val.
+- [x] Flippa-koppling: länk "Gnugga grammatiken" från rumänska ämnet, och prioritera Flippa-orden i Gnuggas lemma-val. → **Svar:** Större beslut 2026-09-13: på sikt blir Gnugga en grammatikmodul i Flippa (variant B), men Gnugga utvecklas separat tills vidare och inga broar byggs ännu. Håll motorn språkoberoende och progressen exporterbar. Se `glosappen/docs/flippa-x-gnugga.md`
 - [ ] Verifiera på iPhone: tangentbordets ă â î ș ț-knappar vs iOS rumänska tangentbord, och att `enterkeyhint="done"` funkar.
 - [ ] Rätt eller fel?-övningen: 4 sekunder – för kort/långt? Ska den mätas som "på tid" även för Böj under 7 s?
 - [ ] Alternativa former: `e` för `este` accepteras; fler behövs? (t.ex. `mânc/mănânc`, `căpșuni/căpșune`)
