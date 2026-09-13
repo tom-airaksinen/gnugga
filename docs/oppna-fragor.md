@@ -39,3 +39,4 @@
 - [x] Glosor som är fraser eller fragment ("telefon-", "slant; pl. pengar") ser skräpiga ut i övningarna. Städa i sv-gloss.json? → **Svar:** Delvis: bindestrecksglosorna är utbytta mot riktiga adjektiv (telefonisk, angränsande, luftburen, världsomfattande, favoriserad), "lipp" rättat till "läpp", och `seamă` blockerad som fraslemma (2026-09-10)
 - [ ] Dativmeningarna blir stela för tredje person ("Läraren säger honom / henne sanningen"). Egna svenska mallar per pronomen?
 - [ ] Pluralövningen böjer även mängdord (întuneric → întunericurile). Formerna finns i Wiktionary men känns konstiga – spärra även i plural?
+- [ ] AI-förklaring även i facitläget på Säg det, alltså innan man bedömt sig själv? Knappen finns redan i feedbackrutan direkt efter bedömningen, så Tom avvaktar och testar i verkligt bruk först (2026-09-13)
