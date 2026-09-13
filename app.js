@@ -9,7 +9,10 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v28";
+const APP_VERSION = "v29";
+// Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
+// glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
+if (window.self !== window.top) document.documentElement.classList.add("embedded");
 // AI-stjärnor (samma som Flippas AI-knapp)
 const AI_STARS = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const ICON_X = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
@@ -614,12 +617,38 @@ function openSettings() {
     try { if (navigator.share) { await navigator.share({ title: "Gnugga-framsteg", text: txt }); } else { await navigator.clipboard.writeText(txt); toast("Kopierat till urklipp"); } }
     catch (_) { try { await navigator.clipboard.writeText(txt); toast("Kopierat till urklipp"); } catch (e) { toast("Kunde inte exportera"); } }
   });
+  // Egen modal i stället för prompt()/confirm(): iOS tystar JS-dialoger från
+  // iframes i standalone-PWA:er, så inbäddat i Flippa returnerade prompt() null
+  // direkt – tyst avbrott utan besked. En textarea funkar överallt.
   $("#imp").addEventListener("click", () => {
-    const txt = prompt("Klistra in din export:"); if (!txt) return;
-    try { const d = JSON.parse(txt); if (d.app !== "gnugga" || !d.progress || !d.progress.pat) throw 0; P = d.progress; if (d.settings) SET = Object.assign(SET, d.settings); loadProgress(); localStorage.setItem(KEY, JSON.stringify(P)); save(); closeModal(); renderHome(); toast("Framsteg importerade"); }
-    catch (_) { toast("Det där såg inte ut som en Gnugga-export"); }
+    openModal(`<div class="mh"><h2>Importera framsteg</h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
+      <p class="muted small" style="margin:0 0 10px">Klistra in en tidigare export (JSON) här:</p>
+      <textarea id="imp-txt" rows="6" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px;font:inherit;font-size:.85rem" autocapitalize="none" autocorrect="off" spellcheck="false"></textarea>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="cta ghost" id="imp-avbryt" style="flex:1">Avbryt</button>
+        <button class="cta" id="imp-kor" style="flex:1">Importera</button>
+      </div>`);
+    $("#imp-avbryt").addEventListener("click", openSettings);
+    $("#imp-kor").addEventListener("click", () => {
+      const txt = ($("#imp-txt").value || "").trim(); if (!txt) return toast("Klistra in exporten först");
+      try {
+        const d = JSON.parse(txt); if (d.app !== "gnugga" || !d.progress || !d.progress.pat) throw 0;
+        // Spara FÖRST, läs sedan: loadProgress() läser om P från localStorage, så
+        // sätts P före skrivningen kastas importen bort (buggen bakom "börjar på 0").
+        localStorage.setItem(KEY, JSON.stringify(d.progress));
+        if (d.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(Object.assign({}, SET, d.settings)));
+        loadProgress(); save(); closeModal(); renderHome(); toast("Framsteg importerade");
+      }
+      catch (_) { toast("Det där såg inte ut som en Gnugga-export"); }
+    });
+    $("#imp-txt").focus();
   });
-  $("#reset").addEventListener("click", () => { if (confirm("Nollställa alla framsteg på den här enheten?")) { localStorage.removeItem(KEY); loadProgress(); closeModal(); renderHome(); toast("Nollställt"); } });
+  $("#reset").addEventListener("click", () => {
+    const b = $("#reset .set-t");
+    if (b.dataset.armed) { localStorage.removeItem(KEY); loadProgress(); closeModal(); renderHome(); toast("Nollställt"); return; }
+    b.dataset.armed = "1"; b.textContent = "Säker? Tryck igen för att nollställa";
+    setTimeout(() => { if ($("#reset .set-t")) { delete $("#reset .set-t").dataset.armed; $("#reset .set-t").textContent = "Nollställ allt"; } }, 4000);
+  });
 }
 $("#settings-btn").addEventListener("click", openSettings);
 $("#lang-chip").addEventListener("click", () => toast(`${LANG.name} är enda språket än så länge`));

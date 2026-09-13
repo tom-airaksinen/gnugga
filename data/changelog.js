@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v29", items: [
+    { t: "Fixat: Importera framsteg funkade inte – det inklistrade kastades bort innan det sparades, och inne i Flippa visades inte ens inklistringsrutan. Nu är det en egen ruta och importen sparas på riktigt", type: "fixed" },
+    { t: "Fixat: onödigt tomrum högst upp när Gnugga körs inne i Flippa", type: "fixed" },
+  ]},
   { date: "13 september 2026", ver: "v28", items: [
     { t: "Nytt hjälpavsnitt \"Exakt hur funkar det?\" som förklarar förfallna, lådorna, hur ord väljs och när ett nytt mönster öppnas.", type: "new", hi: true, ico: "🧭", desc: "Plus två luckor täppta: AI-förklaringen och att framstegen sparas per enhet." },
   ] },
