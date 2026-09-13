@@ -82,6 +82,17 @@ Licens för data: CC BY-SA 4.0 respektive CC BY 4.0, se `LICENSE-data.md`.
 4. `bash scripts/smoke.sh` → inga JS-fel.
 5. `git add -A && git commit -m "..." && git push` – GitHub Pages uppdateras automatiskt.
 
+## Arkiv
+
+`v1/` är den allra första skarpa versionen, live på
+https://tom-airaksinen.github.io/gnugga/v1/ – åtta mönster, ingen flikrad, ingen statistik,
+inget SRS-fönster. Filerna är tagna rakt ur commit `a335bdc` (7 september 2026), som också
+finns som git-taggen `v1`.
+
+Enda avsteget från originalet: `localStorage`-nycklarna har prefixet `gnugga-v1arkiv-`.
+Arkivet ligger på samma origin som den skarpa appen, och utan prefixet hade museikopian
+skrivit över riktiga framsteg med sitt äldre dataformat.
+
 ## Mappar
 
 - `docs/` – plan, forskningsunderlag, datakällor, öppna frågor
