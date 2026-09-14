@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v29";
+const APP_VERSION = "v30";
 // Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
 // glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
 if (window.self !== window.top) document.documentElement.classList.add("embedded");
@@ -79,7 +79,11 @@ function pct(id) {
   const days = Math.min(1, (s.dayList || []).length / 3);
   return Math.min(100, Math.round(20 + Math.min(1, s.seen / 40) * 40 * acc + Math.min(1, s.fast / 15) * 25 + days * 15));
 }
-const active = () => PATTERNS.filter((p) => P.pat[p.id].seen > 0 || P.pat[p.id].intro);
+/* Pausat mönster: ligger kvar med sina framsteg men kommer inte i blandade pass,
+   räknas inte som förfallet och blockerar inte nya mönster. Som Flippas pausade lektioner. */
+const isPaused = (id) => !!(P.pat[id] && P.pat[id].paused);
+const introduced = () => PATTERNS.filter((p) => P.pat[p.id].seen > 0 || P.pat[p.id].intro);
+const active = () => introduced().filter((p) => !isPaused(p.id));
 const nextNew = () => PATTERNS.find((p) => !P.pat[p.id].intro);
 const itemKey = (pid, key) => `${pid}|${key}`;
 
@@ -110,7 +114,7 @@ function chooseLemma(p) {
 }
 function dueCount() {
   const t = today(); let n = 0;
-  for (const k in P.items) if (P.items[k].due <= t) n++;
+  for (const k in P.items) if (P.items[k].due <= t && !isPaused(k.split("|")[0])) n++;
   return n;
 }
 
@@ -165,7 +169,7 @@ function speak(text) {
 if ("speechSynthesis" in window) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = updateVoice; }
 function bindSpeak(root) { $$(".spk", root).forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); speak(b.dataset.say); })); }
 
-const lvlHtml = (id) => { const l = level(id); return `<span class="lvl l${l.n}">${l.t}</span>`; };
+const lvlHtml = (id) => { if (isPaused(id)) return `<span class="lvl paused">Pausad</span>`; const l = level(id); return `<span class="lvl l${l.n}">${l.t}</span>`; };
 const gloss = (x) => x.sv || x.en || "";
 
 /* ---- Hem ---- */
@@ -189,19 +193,21 @@ function renderHome() {
 
   const groups = {}; for (const p of PATTERNS) (groups[p.area] ||= []).push(p);
   $("#pattern-groups").innerHTML = Object.entries(groups).map(([area, ps]) => `<div class="group"><div class="eyebrow">${area}</div>` +
-    ps.map((p) => `<button class="row" data-p="${p.id}"><div class="body"><div class="name">${p.name}</div><div class="bar"><i style="width:${pct(p.id)}%"></i></div></div>${nn && nn.id === p.id ? `<span class="lvl due">Nästa</span>` : lvlHtml(p.id)}<span class="chev">›</span></button>`).join("") + `</div>`).join("");
+    ps.map((p) => `<button class="row${isPaused(p.id) ? " off" : ""}" data-p="${p.id}"><div class="body"><div class="name">${p.name}</div><div class="bar"><i style="width:${pct(p.id)}%"></i></div></div>${nn && nn.id === p.id ? `<span class="lvl due">Nästa</span>` : lvlHtml(p.id)}<span class="chev">›</span></button>`).join("") + `</div>`).join("");
   $$(".row[data-p]").forEach((b) => b.addEventListener("click", () => openPattern(b.dataset.p)));
   $("#lang-chip").textContent = `${LANG.flag} ${LANG.name}`;
   $("#version-tag").textContent = `Gnugga ${APP_VERSION}`;
 }
 /* Nytt mönster introduceras när inget introducerats idag och de aktiva har åtminstone lite på fötterna */
+/* Nytt mönster öppnas först när det gamla sitter. Rumänskan har många verbformer och
+   det blir snabbt för mycket: perfekt innan presens sitter hjälper ingen. Tre villkor:
+   mönstrets egna förkunskaper ska vara Lärt, allt aktivt ska vara Lärt, och högst ett per dag. */
 function canIntroduce() {
   const nn = nextNew(); if (!nn) return false;
+  if ((nn.needs || []).some((id) => level(id).n < 2)) return false;
   const act = active(); if (!act.length) return true;
-  const introToday = act.some((p) => P.pat[p.id].intro === today());
-  if (introToday) return false;
-  const weakest = Math.min(...act.map((p) => P.pat[p.id].seen));
-  return weakest >= 10;
+  if (introduced().some((p) => P.pat[p.id].intro === today())) return false;
+  return act.every((p) => level(p.id).n >= 2);
 }
 
 /* ---- Mönsterskärm ---- */
@@ -224,8 +230,13 @@ function openPattern(id) {
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
     ${active().length > 1 ? `<button class="cta sec" id="p-mixed">Blandat pass med alla aktiva</button>` : ""}
     <div class="links center">${aiBtn(`Förklara ${p.name.toLowerCase()} i rumänsk grammatik för en svensktalande nybörjare: regeln, de vanligaste undantagen, och fem exempel med översättning. Jämför gärna med svenskan.`, "p-ai")}</div>
-    <div class="note">${s.intro ? "Blandat pass är bäst när du kan grunden. \"Bara det här\" passar när ett mönster känns nytt eller skakigt." : "Första gången: läs regeln, sedan kör du övningar på bara det här mönstret."}</div>`;
+    <div class="note">${s.intro ? "Blandat pass är bäst när du kan grunden. \"Bara det här\" passar när ett mönster känns nytt eller skakigt." : "Första gången: läs regeln, sedan kör du övningar på bara det här mönstret."}</div>
+    ${s.intro ? `<div class="set"><button class="set-row" id="p-pause"><span class="set-body"><span class="set-t">${isPaused(id) ? "Återuppta mönstret" : "Pausa mönstret"}</span><span class="set-d">${isPaused(id) ? "Kommer tillbaka i blandade pass och räknas som förfallet igen." : "Ligger kvar med sina framsteg men kommer inte i blandade pass, och bromsar inte nya mönster. Du kan alltid gnugga det härifrån ändå."}</span></span></button></div>` : ""}`;
   $("#p-only").addEventListener("click", () => startSession({ focus: id }));
+  const pb = $("#p-pause"); if (pb) pb.addEventListener("click", () => {
+    P.pat[id].paused = !isPaused(id); save();
+    toast(isPaused(id) ? "Pausat" : "Återupptaget"); openPattern(id);
+  });
   const m = $("#p-mixed"); if (m) m.addEventListener("click", () => startSession({}));
   bindSpeak($("#p-body")); bindAi($("#p-body"));
   show("s-pattern");
@@ -260,7 +271,7 @@ function planSession({ focus, picks }) {
     }
     return items;
   }
-  const act = active(); const nn = canIntroduce() ? nextNew() : null;
+  const act = active().length ? active() : introduced(); const nn = canIntroduce() ? nextNew() : null;
   if (!act.length && nn) { // allra första passet
     items.push({ intro: nn.id });
     for (let i = 0; i < Math.min(n, 12); i++) add(nn.id, i < 3 ? "valj" : i % 5 === 4 ? "sag" : "boj");
@@ -660,7 +671,7 @@ function renderHelp() {
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p><p>Knappen <b>AI-förklaring</b> öppnar Googles AI-läge med en färdig fråga om just den formen. Efter ett fel tar frågan med vad du svarade, så du får veta varför just ditt svar blev fel.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
       <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Övat</b> (du har tränat på det) → <b>Lärt</b> (det sitter: minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Procent rätt räknas alltid på dina senaste 20 svar i mönstret, inte på hela historiken. Ett mönster du kämpade med i början men kan nu ska se ut så.</p><p>Varje ord du gnuggat i ett mönster har dessutom en egen låda, som i Flippa. Hur de lådorna styr vad du får se står under <b>Exakt hur funkar det?</b></p></div></details>
-      <details><summary>Exakt hur funkar det?</summary><div class="more"><p><b>Varje ord har en egen låda per mönster.</b> Ordet <i>casă</i> i plural och <i>casă</i> i bestämd form är två skilda kort. Rätt svar flyttar kortet upp ett steg, rätt <i>och</i> snabbt flyttar två, fel nollställer. Lådan bestämmer när kortet kommer tillbaka: idag, efter 1, 2, 4, 8, 16 eller 32 dagar.</p><p><b>Förfallna är en pool, inte en kö.</b> Siffran på startsidan är alla kort vars dag har passerat. Den växer så fort du rör nya ord, och den ska inte betas av. Ett pass drar bara en handfull ur poolen, och ingenting straffas för att ha legat länge.</p><p><b>Vilket ord du får</b> avgörs på nytt vid varje övning. Oftast blir det ett förfallet ord, viktat så att de svagaste lådorna kommer tillbaka mest. Annars ett ord du aldrig sett, hämtat ur ett fönster av de vanligaste orden. Fönstret börjar på tjugo ord och växer i takt med hur många du mött, så vanliga ord kommer först.</p><p><b>Passet</b> inleds med uppvärmning viktad mot dina svagaste mönster. Ska ett nytt mönster in tar det regeln plus sex övningar. Resten blandas, med regeln att samma mönster aldrig kommer tre gånger i rad. Var femte övning blir <b>Säg det</b> och ungefär var sjätte blir <b>Rätt eller fel?</b>, men bara i mönster som nått Lärt.</p><p><b>Nästa mönster</b> följer en fast ordning: substantivens tre former, sedan verben, adjektiven, genitiv-dativ, pronomenen och räkneorden. Appen öppnar högst ett nytt mönster per dag, och bara när ditt svagaste aktiva mönster har minst tio övningar bakom sig. Du behöver alltså inte bli klar med substantiven innan presens dyker upp. Genitiv-dativ ligger däremot medvetet sent, efter både verb och adjektiv.</p></div></details>
+      <details><summary>Exakt hur funkar det?</summary><div class="more"><p><b>Varje ord har en egen låda per mönster.</b> Ordet <i>casă</i> i plural och <i>casă</i> i bestämd form är två skilda kort. Rätt svar flyttar kortet upp ett steg, rätt <i>och</i> snabbt flyttar två, fel nollställer. Lådan bestämmer när kortet kommer tillbaka: idag, efter 1, 2, 4, 8, 16 eller 32 dagar.</p><p><b>Förfallna är en pool, inte en kö.</b> Siffran på startsidan är alla kort vars dag har passerat. Den växer så fort du rör nya ord, och den ska inte betas av. Ett pass drar bara en handfull ur poolen, och ingenting straffas för att ha legat länge.</p><p><b>Vilket ord du får</b> avgörs på nytt vid varje övning. Oftast blir det ett förfallet ord, viktat så att de svagaste lådorna kommer tillbaka mest. Annars ett ord du aldrig sett, hämtat ur ett fönster av de vanligaste orden. Fönstret börjar på tjugo ord och växer i takt med hur många du mött, så vanliga ord kommer först.</p><p><b>Passet</b> inleds med uppvärmning viktad mot dina svagaste mönster. Ska ett nytt mönster in tar det regeln plus sex övningar. Resten blandas, med regeln att samma mönster aldrig kommer tre gånger i rad. Var femte övning blir <b>Säg det</b> och ungefär var sjätte blir <b>Rätt eller fel?</b>, men bara i mönster som nått Lärt.</p><p><b>Nästa mönster</b> följer en fast ordning: substantivens tre former, sedan verben, adjektiven, genitiv-dativ, pronomenen och räkneorden. Innan ett nytt öppnas ska tre saker stämma. Mönstrets egna förkunskaper ska vara <b>Lärt</b> – perfekt kräver till exempel både presens och de oregelbundna verben. Allt du redan har igång ska vara Lärt. Och det kommer högst ett nytt mönster per dag.</p><p><b>Pausa ett mönster</b> längst ned på dess egen skärm om det tar för mycket plats just nu. Det ligger kvar med sina framsteg, men kommer inte i blandade pass, räknas inte som förfallet och bromsar inte nästa mönster. Du kan fortfarande gnugga det därifrån när du vill, och återuppta det lika enkelt.</p></div></details>
       <details><summary>Läsa eller göra?</summary><div class="more"><p>Båda, men mest göra. Regeln är max en skärm och läses en gång. Sedan är det övningarna som bygger färdigheten – ungefär 10 % läsa, 90 % göra. Fördjupningen under varje mönster är för när du blir nyfiken, inte ett krav.</p></div></details>
       <details><summary>Framsteg och enheter</summary><div class="more"><p>Allt sparas lokalt i webbläsaren på den här enheten. Appen på hemskärmen, Safari och en app som öppnar länken har var sitt utrymme, så framstegen följer inte automatiskt med mellan dem.</p><p>Under kugghjulet kan du <b>exportera</b> framstegen som en fil och <b>importera</b> dem på en annan enhet.</p></div></details>
       <details><summary>Statistiken</summary><div class="more"><p><b>Rätt på tid</b> är Gnuggas eget mått: andelen svar som var både rätt och snabba (under sju sekunder på första försöket, eller rätt i "Rätt eller fel?"). Det är måttet på att en form börjar sitta automatiskt.</p><p><b>Vad du gör fel</b> bygger på feldiagnosen: är det bara krumelurerna, fel ändelse, fel stam eller en riktig form fast fel form? Är det mest krumelurer är det tangentbordet, inte grammatiken.</p></div></details>

@@ -172,7 +172,7 @@ const RO = (() => {
           why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl), forms: nounForms(n), target: "obestämd plural", stemHint: STEM_HINT_N };
       } },
 
-    { id: "n-pldef", area: "Substantiv", name: "Bestämd form plural", short: "Bestämd plural", order: 3,
+    { id: "n-pldef", area: "Substantiv", name: "Bestämd form plural", short: "Bestämd plural", order: 3, needs: ["n-pl"],
       rule: `Ta pluralen och häng på artikeln:<br><br>
         ${ro("-i → -ii")} (băieți → băieții, oameni → oamenii)<br>
         ${ro("-e → -ele")} (case → casele, orașe → orașele)<br>
@@ -214,7 +214,7 @@ const RO = (() => {
           distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m"], v.pres[pi]), forms: verbForms(v), target: `presens för ${PERS[pi].ro}`, stemHint: "Ändelsen stämmer, men stammen är inte riktigt rätt – flera verb växlar vokal i stammen (a putea: pot – poate)." };
       } },
 
-    { id: "v-irr", area: "Verb", name: "Oregelbundna kärnverb", short: "Oregelbundna", order: 5,
+    { id: "v-irr", area: "Verb", name: "Oregelbundna kärnverb", short: "Oregelbundna", order: 5, needs: ["v-pres"],
       rule: `Verb du behöver hela tiden och som inte följer mönstren. Lär dem som helheter:<br><br>
         ${ro("a fi")} (vara): sunt · ești · este · suntem · sunteți · sunt<br>
         ${ro("a avea")} (ha): am · ai · are · avem · aveți · au<br>
@@ -237,7 +237,7 @@ const RO = (() => {
           distractors: pad3(v.pres, [v.pres[pi] + "i", v.pres[pi] + "m", v.pres[pi] + "ți"], v.pres[pi]), forms: verbForms(v), target: `presens för ${PERS[pi].ro}`, stemHint: "Slutet stämmer men inte början – oregelbundna verb byter ofta stam helt." };
       } },
 
-    { id: "v-perf", area: "Verb", name: "Perfekt – am făcut", short: "Perfekt", order: 6,
+    { id: "v-perf", area: "Verb", name: "Perfekt – am făcut", short: "Perfekt", order: 6, needs: ["v-pres", "v-irr"],
       rule: `Rumänskans vanligaste förflutna tid byggs som svenskans perfekt: <span class="sv">hjälpverb + particip</span>. Hjälpverbet är en kortform av <i>a avea</i>:<br><br>
         ${ro("am · ai · a · am · ați · au")} + particip<br><br>
         am lucrat (jag har arbetat / jag arbetade) · ai mers · a văzut · am fost · ați vorbit · au făcut<br><br>
@@ -258,7 +258,7 @@ const RO = (() => {
           distractors: pad3(AUX.map((a) => `${a} ${v.part}`), [`${AUX[pi]} ${v.inf.slice(2)}`], ans), forms: Object.fromEntries(AUX.map((a, i) => [`${a} ${v.part}`, `perfekt för ${PERS[i].ro}`])), target: `perfekt för ${PERS[pi].ro}`, stemHint: `Hjälpverbet stämmer – kolla participet. Participet av ${v.inf} är <b>${v.part}</b>.` };
       } },
 
-    { id: "adj", area: "Adjektiv", name: "Adjektivet följer med", short: "Adjektiv", order: 7,
+    { id: "adj", area: "Adjektiv", name: "Adjektivet följer med", short: "Adjektiv", order: 7, needs: ["n-pl"],
       rule: `Adjektivet står <span class="sv">efter</span> substantivet och böjs efter dess genus och numerus – som svenskans <i>stor / stort / stora</i>, men med fyra rutor:<br><br>
         ${ro("bun")} (m sg) · ${ro("bună")} (f sg) · ${ro("buni")} (m pl) · ${ro("bune")} (f pl)<br><br>
         un băiat bun · o fată bună · băieți buni · fete bune<br><br>
@@ -286,7 +286,7 @@ const RO = (() => {
           distractors: pad3(forms, [a.ms + "ă", a.ms + "i", a.ms + "e", a.ms.slice(0, -1) + "ă", a.ms.slice(0, -1) + "i"], ans), forms: adjForms(a), target: `${fem ? "feminin" : "maskulin"} ${num === "sg" ? "singular" : "plural"}`, stemHint: `Ändelsen stämmer men stammen ändras – ${a.ms} har formerna ${forms.join(" · ")}.` };
       } },
 
-    { id: "n-gd", area: "Substantiv", name: "Genitiv-dativ – casei, băiatului", short: "Genitiv-dativ", order: 8,
+    { id: "n-gd", area: "Substantiv", name: "Genitiv-dativ – casei, băiatului", short: "Genitiv-dativ", order: 8, needs: ["n-def", "n-pl"],
       rule: `Rumänskan har ett kasus för "någons" och "till någon" – <span class="sv">genitiv-dativ</span>. Det syns bara på bestämd form:<br><br>
         ${ro("Maskulint & neutrum:")} bestämd form + -ui: băiatul → băiat<b>ului</b> (pojkens / till pojken), orașul → oraș<b>ului</b><br>
         ${ro("Feminint:")} ser ut som pluralen + -i: casă → case → cas<b>ei</b> (husets / till huset), fată → fete → fet<b>ei</b><br>
@@ -352,7 +352,7 @@ const RO = (() => {
           distractors: pad3(PRON_ACC.map((x) => x.k).concat(PRON_DAT.map((x) => x.k)), [], p.k), forms: pronForms(PRON_ACC), target: `${p.sv} i ackusativ`, stemHint: "" };
       } },
 
-    { id: "pron-dat", area: "Pronomen", name: "Dativpronomen – îmi, îți, îi", short: "Dativ", order: 10,
+    { id: "pron-dat", area: "Pronomen", name: "Dativpronomen – îmi, îți, îi", short: "Dativ", order: 10, needs: ["pron-acc"],
       rule: `"Till mig, till dig, till honom…" – den som får något – har egna korta former, också <span class="sv">före verbet</span>:<br><br>
         ${ro("îmi")} mig · ${ro("îți")} dig · ${ro("îi")} honom/henne · ${ro("ne")} oss · ${ro("vă")} er · ${ro("le")} dem<br><br>
         Ion <b>îmi</b> dă cartea (Ion ger mig boken) · <b>Îți</b> spun adevărul (jag säger dig sanningen) · <b>Îi</b> arăt drumul (jag visar honom vägen)<br><br>
@@ -407,7 +407,7 @@ const RO = (() => {
   const NUM_POOL = [1, 1, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 15, 16, 18, 19, 20, 21, 22, 25, 30, 32, 40, 45, 50, 60, 71, 80, 99, 100];
 
   PATTERNS.push(
-    { id: "num", area: "Räkneord", name: "Räkneord + substantiv", short: "Räkneord", order: 11,
+    { id: "num", area: "Räkneord", name: "Räkneord + substantiv", short: "Räkneord", order: 11, needs: ["n-pl"],
       rule: `Tre zoner:<br><br>
         ${ro("1")} = obestämd artikel: <b>un</b> băiat · <b>o</b> fată<br>
         ${ro("2")} böjs efter genus: <b>doi</b> băieți · <b>două</b> fete · <b>două</b> orașe (neutrum är feminint i plural). Samma för 12: doisprezece / douăsprezece<br>

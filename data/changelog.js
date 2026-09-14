@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "14 september 2026", ver: "v30", items: [
+    { t: "Lugnare takt: ett nytt mönster öppnas först när allt du har igång är Lärt, inte efter tio övningar. Perfekt kräver dessutom att både presens och de oregelbundna verben sitter.", type: "improved", hi: true, ico: "🐢", desc: "Rumänskans verb har många grupper och former. Att få perfekt innan presens sitter hjälper ingen." },
+    { t: "Pausa ett mönster från dess egen skärm, som pausade lektioner i Flippa. Det försvinner ur blandade pass och ur förfallna tills du återupptar det.", type: "new", hi: true, ico: "⏸️" },
+  ] },
   { date: "13 september 2026", ver: "v29", items: [
     { t: "Fixat: Importera framsteg funkade inte – det inklistrade kastades bort innan det sparades, och inne i Flippa visades inte ens inklistringsrutan. Nu är det en egen ruta och importen sparas på riktigt", type: "fixed" },
     { t: "Fixat: onödigt tomrum högst upp när Gnugga körs inne i Flippa", type: "fixed" },

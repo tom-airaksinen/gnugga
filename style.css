@@ -106,6 +106,8 @@ body.tabbar-on .pad { padding-bottom: 18px; }
 .lvl.l2 { background: rgba(63,207,168,.18); color: var(--accent); }
 .lvl.l3 { background: var(--accent); color: var(--accent-ink); }
 .lvl.due { background: rgba(242,184,75,.18); color: var(--warm); }
+.lvl.paused { background: var(--track); color: var(--muted); }
+.row.off .name, .row.off .bar { opacity: .55; }
 .chev { color: var(--muted); }
 
 /* Mönsterskärm */

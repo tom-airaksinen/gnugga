@@ -61,6 +61,24 @@ test = '''<script>
       out.push("ai rätt-eller-fel: " + (qr.includes('Jag trodde att "fel-form" var rätt form') ? "OK" : "SAKNAS – " + qr));
       const qc = aiQuestion(ex, wrongPhrase({ type: "boj", lastInput: ex.answer, ex }));
       out.push("ai utan felsvar: " + (qc.includes("Jag svarade") ? "FEL – citerar rätt svar" : "OK")); }
+
+    // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
+    { const backup = JSON.stringify(P); const y = addDays(today(), -1);
+      const pat = (seen) => ({ seen, right: seen, fast: 0, intro: y, last: y, dayList: [y], hist: Array(Math.min(20, seen)).fill(1) });
+      const only = (map) => { for (const p of PATTERNS) P.pat[p.id] = { seen: 0, right: 0, fast: 0, intro: null, last: null, dayList: [], hist: [] };
+                              for (const k in map) P.pat[k] = pat(map[k]); };
+      const ja = (b) => b ? "ja" : "NEJ (fel)"; const nej = (b) => b ? "FEL – öppen" : "ja";
+      only({ "n-def": 12 });  out.push("grind: Övat blockerar = " + nej(canIntroduce()));
+      only({ "n-def": 20 });  out.push("grind: Lärt öppnar = " + ja(canIntroduce()) + ", nästa=" + (nextNew() || {}).id);
+      only({ "n-def": 20, "n-pl": 20, "n-pldef": 20, "v-pres": 20, "v-irr": 12 });
+      out.push("grind: perfekt kräver oregelbundna = " + nej(canIntroduce()) + ", nästa=" + (nextNew() || {}).id);
+      P.pat["v-irr"].paused = true;
+      out.push("grind: paus kringgår inte förkunskap = " + nej(canIntroduce()));
+      only({ "n-def": 20, "n-pl": 20, "n-pldef": 20, "v-pres": 20, "v-irr": 20 });
+      out.push("grind: öppnar när allt sitter = " + ja(canIntroduce()));
+      P.pat["n-def"].paused = true; P.pat["n-def"].seen = 5; P.pat["n-def"].hist = [];
+      out.push("paus: pausat svagt mönster blockerar inte = " + ja(canIntroduce()));
+      P = JSON.parse(backup); }
     openSettings(); out.push("settings: " + $$("#modal .set-row").length + " rows"); closeModal();
     renderHelp(); out.push("help: " + $$("#help-body details").length + " sections, om-rader=" + $$("#help-body .set-row").length);
     renderStats(); out.push("stats: kpi=" + $$("#stats-body .kpi").length + " heat=" + $$("#stats-body .heat .d").length + " weak=" + $$("#stats-body .wl span").length + " err=" + $$("#stats-body .flist div").length + " | " + $("#stats-body .st-hero .cap").textContent);
