@@ -82,6 +82,26 @@ test = '''<script>
       out.push("tabell: " + ($("#tbl-res .tres") ? $("#tbl-res .tres").textContent : "inget resultat") + " · lådor=" + keys.map((k) => P.items[k].box).join(","));
       const fel = $$("#tbl-para .prow.bad").length; out.push("tabell: felrader vid rätt svar=" + fel); }
 
+    // gruppass: tre verb ur samma mönster + jämförelsen
+    { const p = byId["v-pres"], list = groupList(p);
+      out.push("grupper: " + list.map((x) => x.g.name + "=" + x.verbs.length).join(" · "));
+      const gEz = list.find((x) => x.g.id === "a-ez").g;
+      const q = groupPick(p, gEz);
+      out.push("gruppass val: " + q.map((v) => v.inf).join(", ") + " · unika=" + (new Set(q.map((v) => v.inf)).size));
+      const d0 = (P.days[today()] || { n: 0 }).n;
+      for (let i = 0; i < q.length; i++) {
+        openTable("v-pres", q[i], { g: gEz, queue: q, qi: i });
+        const forms = p.paradigm.forms(q[i]);
+        $$("#tbl-para input").forEach((inp, j) => { if (!inp.readOnly) inp.value = forms[j]; });
+        checkTable();
+      }
+      const d1 = (P.days[today()] || { n: 0 }).n;
+      out.push("gruppass: knapp=" + ($("#tbl-next") ? $("#tbl-next").textContent : "saknas") + " dagrader=+" + (d1 - d0));
+      $("#tbl-next").click();
+      out.push("jämförelse: celler=" + $$("#tbl-body .cmp .c").length + " markerade=" + $$("#tbl-body .cmp em").length + " rubrik=" + $("#tbl-title").textContent);
+      const gOa = list.find((x) => x.g.id === "oa");
+      out.push("oa-gruppen: " + (gOa ? gOa.verbs.slice(0, 3).map((v) => v.inf).join(", ") : "saknas")); }
+
     // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
     { const backup = JSON.stringify(P); const y = addDays(today(), -1);
       const pat = (seen) => ({ seen, right: seen, fast: 0, intro: y, last: y, dayList: [y], hist: Array(Math.min(20, seen)).fill(1) });

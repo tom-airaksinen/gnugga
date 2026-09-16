@@ -185,6 +185,15 @@ body.typing .task .q { font-size: .92rem; }
 .prow.dia input { border-color: var(--warm); } .prow.dia .mark { color: var(--warm); }
 .prow .fix { grid-column: 2 / span 2; font-size: .82rem; color: var(--fail); margin-top: -3px; }
 .prow.dia .fix { color: var(--warm); }
+/* Gruppass: jämförelsen på slutet */
+.cmpwrap { overflow-x: auto; }
+.cmp { display: grid; gap: 3px; min-width: 100%; }
+.cmp .h { font-size: .7rem; color: var(--muted); font-weight: 700; }
+.cmp .p { font-size: .74rem; color: var(--muted); font-weight: 700; align-self: center; }
+.cmp .c { background: var(--surface-2); border-radius: 8px; padding: 7px 6px; font-size: .78rem; font-weight: 700; white-space: nowrap; letter-spacing: -.01em; }
+.cmp .c em { font-style: normal; color: var(--accent); }
+.endings { font-size: .9rem; font-weight: 800; color: var(--accent); }
+
 .tres { border-radius: 12px; padding: 10px 12px; font-size: .92rem; font-weight: 700; }
 .tres.good { background: rgba(91,191,114,.16); color: var(--good); }
 .tres.mid { background: rgba(242,184,75,.16); color: var(--warm); }

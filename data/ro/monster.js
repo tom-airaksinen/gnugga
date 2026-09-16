@@ -139,6 +139,32 @@ const RO = (() => {
 
   /* Paradigm = hela raden i ett svep ("Böj hela verbet"). Motorn läser bara
      rows (etiketter), forms(lemma) och ok(lemma); resten är språkets sak. */
+
+  /* Gruppass: tre verb ur samma mönster i rad. has() avgör vilka verb som hör hit,
+     end[] är gruppens ändelse per person (markeras i jämförelsen), stem markerar
+     istället stamväxlingen. Grupper med färre än tre verb visas inte. */
+  const G_PRES = [
+    { id: "a", name: "-a", show: "– · -i · -ă · -ăm · -ați · -ă", end: ["", "i", "ă", "ăm", "ați", "ă"], has: (v) => v.grp === "a" },
+    { id: "a-ez", name: "-a med -ez", show: "-ez · -ezi · -ează · -ăm · -ați · -ează", end: ["ez", "ezi", "ează", "ăm", "ați", "ează"], has: (v) => v.grp === "a-ez" },
+    { id: "i-esc", name: "-i med -esc", show: "-esc · -ești · -ește · -im · -iți · -esc", end: ["esc", "ești", "ește", "im", "iți", "esc"], has: (v) => v.grp === "i-esc" },
+    { id: "i", name: "-i", show: "– · -i · -e · -im · -iți · –", end: ["", "i", "e", "im", "iți", ""], has: (v) => v.grp === "i" },
+    { id: "e", name: "-e", show: "– · -i · -e · -em · -eți · –", end: ["", "i", "e", "em", "eți", ""], has: (v) => v.grp === "e" },
+    { id: "ea", name: "-ea", show: "– · -i · -e · -em · -eți · –", end: ["", "i", "e", "em", "eți", ""], has: (v) => v.grp === "ea" },
+    { id: "î", name: "-î", show: "– · -i · -ă · -âm · -âți · -ă", end: ["", "i", "ă", "âm", "âți", "ă"], has: (v) => v.grp === "î" },
+    { id: "oa", name: "o → oa i stammen", stem: true,
+      note: "Ändelserna kommer från verbets egen grupp – det gemensamma sitter i stammen: <b>o</b> i eu och ei/ele, <b>oa</b> i el/ea. Växlingen går tvärs över grupperna, och den brukar fastna sist.",
+      has: (v) => /oa/.test(v.pres[2] || "") && !/oa/.test(v.pres[0] || "") },
+  ];
+  const G_IRR = [
+    { id: "irr", name: "Oregelbundna kärnverb",
+      note: "Ingen gemensam ändelse att luta sig mot. De här lärs som hela rader, ett verb i taget – därför blandas de aldrig med de regelbundna.",
+      has: () => true },
+  ];
+  const G_PERF = ["at", "it", "ut", "s"].map((e) => ({
+    id: e, name: `particip på -${e}`, show: `-${e}`, end: [e, e, e, e, e, e],
+    has: (v) => (v.part || "").endsWith(e),
+  }));
+
   const paraDef = (forms, note) => ({
     rows: PERS.map((p) => p.ro),
     hints: PERS.map((p) => p.sv),
@@ -208,7 +234,7 @@ const RO = (() => {
       } },
 
     { id: "v-pres", area: "Verb", name: "Presens – de regelbundna grupperna", short: "Presens", order: 4,
-      paradigm: paraDef((v) => v.pres, "Ändelserna hör ihop gruppvis. Skriv hela raden så ser du systemet."),
+      paradigm: Object.assign(paraDef((v) => v.pres, "Ändelserna hör ihop gruppvis. Skriv hela raden så ser du systemet."), { groups: G_PRES }),
       rule: `Infinitivens slut avgör gruppen, gruppen avgör ändelserna. De fyra vanligaste:<br><br>
         ${ro("-a")} (a cânta): cânt · cânți · cântă · cântăm · cântați · cântă<br>
         ${ro("-a med -ez")} (a lucra): lucrez · lucrezi · lucrează · lucrăm · lucrați · lucrează<br>
@@ -232,7 +258,7 @@ const RO = (() => {
       } },
 
     { id: "v-irr", area: "Verb", name: "Oregelbundna kärnverb", short: "Oregelbundna", order: 5, needs: ["v-pres"],
-      paradigm: paraDef((v) => v.pres, "De här har ingen gemensam regel – hela raden lärs som en enhet."),
+      paradigm: Object.assign(paraDef((v) => v.pres, "De här har ingen gemensam regel – hela raden lärs som en enhet."), { groups: G_IRR }),
       rule: `Verb du behöver hela tiden och som inte följer mönstren. Lär dem som helheter:<br><br>
         ${ro("a fi")} (vara): sunt · ești · este · suntem · sunteți · sunt<br>
         ${ro("a avea")} (ha): am · ai · are · avem · aveți · au<br>
@@ -256,7 +282,7 @@ const RO = (() => {
       } },
 
     { id: "v-perf", area: "Verb", name: "Perfekt – am făcut", short: "Perfekt", order: 6, needs: ["v-pres", "v-irr"],
-      paradigm: paraDef((v) => AUX.map((a) => `${a} ${v.part}`), "Participet är samma hela raden. Det enda som byts är hjälpverbet."),
+      paradigm: Object.assign(paraDef((v) => AUX.map((a) => `${a} ${v.part}`), "Participet är samma hela raden. Det enda som byts är hjälpverbet."), { groups: G_PERF }),
       rule: `Rumänskans vanligaste förflutna tid byggs som svenskans perfekt: <span class="sv">hjälpverb + particip</span>. Hjälpverbet är en kortform av <i>a avea</i>:<br><br>
         ${ro("am · ai · a · am · ați · au")} + particip<br><br>
         am lucrat (jag har arbetat / jag arbetade) · ai mers · a văzut · am fost · ați vorbit · au făcut<br><br>

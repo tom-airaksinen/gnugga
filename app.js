@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v33";
+const APP_VERSION = "v34";
 // Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
 // glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
 if (window.self !== window.top) document.documentElement.classList.add("embedded");
@@ -229,6 +229,7 @@ function openPattern(id) {
       ${strong.length ? `<div class="small muted" style="margin-top:6px">Sitter bra</div><div class="wordlist">${strong.map((i) => `<span class="strong">${esc(i.key)}</span>`).join("")}</div>` : ""}</div>` : "") +
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
     ${p.paradigm ? `<button class="cta sec" id="p-table">Böj hela verbet${tableDue(p).length ? ` · ${tableDue(p).length} att repetera` : ""}</button>` : ""}
+    ${p.paradigm && p.paradigm.groups ? `<button class="cta sec" id="p-group">Gruppass · tre verb ur samma mönster</button>` : ""}
     ${active().length > 1 ? `<button class="cta sec" id="p-mixed">Blandat pass med alla aktiva</button>` : ""}
     <div class="links center">${aiBtn(`Förklara ${p.name.toLowerCase()} i rumänsk grammatik för en svensktalande nybörjare: regeln, de vanligaste undantagen, och fem exempel med översättning. Jämför gärna med svenskan.`, "p-ai")}</div>
     <div class="note">${s.intro ? "Blandat pass är bäst när du kan grunden. \"Bara det här\" passar när ett mönster känns nytt eller skakigt." : "Första gången: läs regeln, sedan kör du övningar på bara det här mönstret."}</div>
@@ -240,6 +241,7 @@ function openPattern(id) {
   });
   const m = $("#p-mixed"); if (m) m.addEventListener("click", () => startSession({}));
   const tb = $("#p-table"); if (tb) tb.addEventListener("click", () => openTable(id));
+  const gb = $("#p-group"); if (gb) gb.addEventListener("click", () => openGroups(id));
   bindSpeak($("#p-body")); bindAi($("#p-body"));
   show("s-pattern");
 }
@@ -516,17 +518,81 @@ function chooseTableLemma(p) {
   return due.length ? pick(due) : pick(tablePool(p));
 }
 
-function openTable(pid, lemma) {
+
+/* ---- Gruppass: tre verb ur samma mönster i rad, sedan jämförelsen ----
+   Ett gruppass är tre tabeller i kö. Bokföringen är därför oförändrad:
+   sex kort per verb i lådsystemet, en rad per verb i dagsstatistiken. */
+function groupList(p) {
+  const pool = tablePool(p);
+  return (p.paradigm.groups || []).map((g) => ({ g, verbs: pool.filter(g.has) })).filter((x) => x.verbs.length >= 3);
+}
+function groupPick(p, g, n = 3) {
+  const pool = tablePool(p).filter(g.has), t = today();
+  const isDue = (v) => [0, 1, 2, 3, 4, 5].some((i) => { const it = P.items[itemKey(p.id, tblKey(p.key(v), i))]; return it && it.due <= t; });
+  const out = [];
+  const add = (arr) => { for (const v of arr) if (out.length < n && !out.includes(v)) out.push(v); };
+  add(shuffle(pool.filter(isDue)));
+  add(pool.filter((v) => !tableSeen(p, v)));      // frekvensordning: vanligaste först
+  add(shuffle(pool));
+  return out.slice(0, n);
+}
+function openGroups(pid) {
+  const p = byId[pid], list = groupList(p);
+  $("#tbl-title").textContent = "Gruppass";
+  $("#tbl-count").textContent = p.short;
+  $("#tbl-body").innerHTML = `
+    <div class="note">Tre verb ur samma mönster i rad. Sist ställs de tre bredvid varandra, så att det som är gemensamt syns av sig självt.</div>
+    <div class="set">${list.map(({ g, verbs }) => `
+      <button class="set-row" data-g="${esc(g.id)}"><span class="set-body"><span class="set-t">${esc(g.name)}</span>
+      <span class="set-d">${verbs.length} verb${g.show ? ` · ${esc(g.show)}` : ""}</span></span><span class="chev">›</span></button>`).join("")}</div>`;
+  $$("#tbl-body .set-row").forEach((b) => b.addEventListener("click", () => {
+    const g = (p.paradigm.groups || []).find((x) => x.id === b.dataset.g);
+    const queue = groupPick(p, g);
+    openTable(pid, queue[0], { g, queue, qi: 0 });
+  }));
+  show("s-table");
+}
+function markForm(g, form, i) {
+  if (g.stem) return esc(form).replace(/oa/g, "<em>oa</em>").replace(/(^|[^ao])o(?!a)/g, "$1<em>o</em>");
+  const e = g.end && g.end[i];
+  if (!e || !form.endsWith(e)) return esc(form);
+  return esc(form.slice(0, form.length - e.length)) + `<em>${esc(e)}</em>`;
+}
+function groupSummary(pid, ctx) {
+  const p = byId[pid], { g, queue } = ctx;
+  const rows = p.paradigm.rows;
+  $("#tbl-title").textContent = "Mönstret";
+  $("#tbl-count").textContent = g.name;
+  const cells = rows.map((r, i) => `<span class="p">${esc(r)}</span>` +
+    queue.map((v) => `<span class="c">${markForm(g, p.paradigm.forms(v)[i], i)}</span>`).join("")).join("");
+  $("#tbl-body").innerHTML = `
+    <div class="card">
+      <div class="cmpwrap"><div class="cmp" style="grid-template-columns:46px repeat(${queue.length},minmax(0,1fr))">
+        <span class="h"></span>${queue.map((v) => `<span class="h">${esc(v.inf || p.key(v))}</span>`).join("")}${cells}
+      </div></div>
+      ${g.show ? `<div class="endings">${esc(g.show)}</div><div class="small muted">Samma ändelser i alla tre. Det enda som byts är stammen.</div>`
+               : `<div class="small muted">${g.note || ""}</div>`}
+      <div class="acts">
+        <button class="cta" id="grp-more">Tre nya verb</button>
+        <button class="cta sec" id="grp-done">Klart</button>
+      </div>
+    </div>`;
+  $("#grp-more").addEventListener("click", () => { const q = groupPick(p, g); openTable(pid, q[0], { g, queue: q, qi: 0 }); });
+  $("#grp-done").addEventListener("click", () => openPattern(pid));
+  show("s-table");
+}
+
+function openTable(pid, lemma, ctx) {
   const p = byId[pid];
   const lem = lemma || chooseTableLemma(p);
   const forms = p.paradigm.forms(lem);
   const name = lem.inf || p.key(lem);
   const first = !tableSeen(p, lem);
   const pre = first ? [0, 3] : [];                   // stödhjul första gången: eu och noi
-  TBL = { p, lem, forms, pre, checked: false };
+  TBL = { p, lem, forms, pre, checked: false, ctx: ctx || null, pid };
   const due = tableDue(p).length;
-  $("#tbl-title").textContent = "Böj hela verbet";
-  $("#tbl-count").textContent = p.short;
+  $("#tbl-title").textContent = ctx ? ctx.g.name : "Böj hela verbet";
+  $("#tbl-count").textContent = ctx ? `verb ${ctx.qi + 1} av ${ctx.queue.length}` : p.short;
   $("#tbl-body").innerHTML = `
     <div class="card">
       <div class="vhead"><span class="inf">${esc(name)}</span><span class="sv">${esc(gloss(lem))}</span></div>
@@ -541,10 +607,7 @@ function openTable(pid, lemma) {
       ${pre.length ? `<div class="small muted">Första gången med ${esc(name)}: eu och noi ligger ifyllda som stöd.</div>` : ""}
       <div id="tbl-res"></div>
       <button class="cta" id="tbl-check">Kolla raden</button>
-      <div class="acts hidden" id="tbl-acts">
-        <button class="cta" id="tbl-next">Nästa verb</button>
-        <button class="cta sec" id="tbl-done">Klart</button>
-      </div>
+      <div class="acts hidden" id="tbl-acts"></div>
     </div>
     <div class="note">${esc(p.paradigm.note || "")} Tabellen räknas som <b>en</b> övning i statistiken, men varje form får sin egen plats i repetitionen.${due ? ` Du har ${due} verb att repetera här.` : ""}</div>`;
 
@@ -569,8 +632,6 @@ function openTable(pid, lemma) {
     inp.focus(); inp.setSelectionRange(s + 1, s + 1);
   }));
   $("#tbl-check").addEventListener("click", checkTable);
-  $("#tbl-next").addEventListener("click", () => openTable(pid));
-  $("#tbl-done").addEventListener("click", () => openPattern(pid));
   show("s-table");
   const firstEmpty = inputs.find((x) => !x.readOnly);
   if (firstEmpty) setTimeout(() => firstEmpty.focus(), 80);
@@ -609,7 +670,20 @@ function checkTable() {
   $("#tbl-res").innerHTML = `<div class="tres ${cls}">${right} av ${answered} rätt${extra}</div>
     <div class="links center">${aiBtn(q, "tbl-ai")}<button class="linkish" id="tbl-say">Läs hela raden</button></div>`;
   $("#tbl-check").classList.add("hidden");
-  $("#tbl-acts").classList.remove("hidden");
+  const ctx = TBL.ctx, pid = TBL.pid, acts = $("#tbl-acts");
+  const left = ctx ? ctx.queue.length - ctx.qi - 1 : 0;
+  acts.innerHTML = !ctx
+    ? `<button class="cta" id="tbl-next">Nästa verb</button><button class="cta sec" id="tbl-done">Klart</button>`
+    : left
+      ? `<button class="cta" id="tbl-next">Nästa verb · ${left} kvar</button><button class="cta sec" id="tbl-done">Avbryt</button>`
+      : `<button class="cta" id="tbl-next">Visa mönstret</button>`;
+  acts.classList.remove("hidden");
+  $("#tbl-next").addEventListener("click", () => {
+    if (!ctx) return openTable(pid);
+    if (left) return openTable(pid, ctx.queue[ctx.qi + 1], { ...ctx, qi: ctx.qi + 1 });
+    groupSummary(pid, ctx);
+  });
+  const dn = $("#tbl-done"); if (dn) dn.addEventListener("click", () => openPattern(pid));
   $("#tbl-say").addEventListener("click", () => speak(forms.join(", ")));
   bindAi($("#tbl-res"));
   if (all) speak(forms.join(", "));
@@ -821,7 +895,7 @@ function renderHelp() {
   $("#help-body").innerHTML = `<div class="help">
       <details open><summary>Vad Gnugga är</summary><div class="more"><p>Ett komplement till Flippa. Flippa nöter <i>ord</i>; Gnugga nöter <i>formerna</i>: bestämd form, plural, verbböjning, adjektiv som ska stämma. ${LANG.intro}</p></div></details>
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
-      <details><summary>Böj hela verbet</summary><div class="more"><p>På verbmönstrens skärm finns <b>Böj hela verbet</b>. Där skriver du hela raden på en gång – eu, tu, el/ea, noi, voi, ei/ele – och kollar alla sex i ett svep. Att se ändelserna som en kolumn gör mönstret synligt på ett sätt som lösryckta former inte gör.</p><p>Första gången ett verb dyker upp ligger <b>eu</b> och <b>noi</b> ifyllda som stöd. Nästa gång är alla sex tomma.</p><p><b>Räkningen:</b> tabellen är <b>en</b> övning i dagsstatistiken men <b>sex kort</b> i repetitionen, ett per person. Den räknas som rätt bara om hela raden satt. Rätt på tid mäts inte här, eftersom sex former tar tid även när man kan dem.</p></div></details>
+      <details><summary>Böj hela verbet</summary><div class="more"><p>På verbmönstrens skärm finns <b>Böj hela verbet</b>. Där skriver du hela raden på en gång – eu, tu, el/ea, noi, voi, ei/ele – och kollar alla sex i ett svep. Att se ändelserna som en kolumn gör mönstret synligt på ett sätt som lösryckta former inte gör.</p><p>Första gången ett verb dyker upp ligger <b>eu</b> och <b>noi</b> ifyllda som stöd. Nästa gång är alla sex tomma.</p><p><b>Räkningen:</b> tabellen är <b>en</b> övning i dagsstatistiken men <b>sex kort</b> i repetitionen, ett per person. Den räknas som rätt bara om hela raden satt. Rätt på tid mäts inte här, eftersom sex former tar tid även när man kan dem.</p><p><b>Gruppass</b> är tre tabeller i rad ur samma mönster, till exempel tre verb i -ez-gruppen. Sist ställs de tre paradigmen bredvid varandra med ändelserna markerade, så att det gemensamma syns av sig självt. Ett paradigm visar hur ett verb böjs; tre visar regeln.</p><p>Ett av mönstren är ingen ändelsegrupp alls utan stamväxlingen <b>o → oa</b> (întorc men întoarce, dorm men doarme). Den går tvärs över grupperna och är värd egen drill. Oregelbundna kärnverb har ett eget spår, eftersom de inte delar någon ändelse.</p></div></details>
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p><p>Knappen <b>AI-förklaring</b> öppnar Googles AI-läge med en färdig fråga om just den formen. Efter ett fel tar frågan med vad du svarade, så du får veta varför just ditt svar blev fel.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
       <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Övat</b> (du har tränat på det) → <b>Lärt</b> (det sitter: minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Procent rätt räknas alltid på dina senaste 20 svar i mönstret, inte på hela historiken. Ett mönster du kämpade med i början men kan nu ska se ut så.</p><p>Varje ord du gnuggat i ett mönster har dessutom en egen låda, som i Flippa. Hur de lådorna styr vad du får se står under <b>Exakt hur funkar det?</b></p></div></details>

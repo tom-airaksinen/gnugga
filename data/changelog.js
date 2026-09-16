@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "16 september 2026", ver: "v34", items: [
+    { t: "Nytt: gruppass. Tre verb ur samma mönster i rad, och sist står de tre böjningarna bredvid varandra med ändelserna markerade.", type: "new", hi: true, ico: "🧩", desc: "Välj mellan ändelsegrupperna, stamväxlingen o → oa som går tvärs över grupperna, eller de oregelbundna kärnverben. I perfekt grupperas verben efter participets ändelse." },
+  ] },
   { date: "16 september 2026", ver: "v33", items: [
     { t: "Regelbundna verb är nu bara regelbundna: a avea, a putea, a da och de andra kärnverben dyker inte längre upp i den regelbundna presensdrillen. De hör hemma i Oregelbundna kärnverb.", type: "fixed" },
     { t: "Verbgruppen bestäms av infinitivens ändelse i stället för Wiktionarys mallnamn, så ledtrådarna säger rätt grupp. Tolv verb fick ny grupp, bland andra a face (-e) och a crea (-a med -ez).", type: "fixed" },
