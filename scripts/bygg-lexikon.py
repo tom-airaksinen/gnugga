@@ -41,6 +41,23 @@ def lemma_freq(forms):
 GRP = {"a": "a", "a-ez": "a-ez", "i-esc": "i-esc", "i": "i", "e": "e", "e-ut": "e", "e-s": "e", "e-t": "e", "e-pt": "e",
        "2": "ea", "ea": "ea", "ea-ut": "ea", "î": "î", "î-ăsc": "î"}
 
+def group_of(inf, tmpl, pres):
+    """Grupp ur infinitivens ändelse + -ez/-esc-markören i presens.
+
+    Mallnamnet duger inte: kaikkis generiska ro-conj-2 används för a face (-e),
+    a da (-a), a ști (-i) och fler, vilket gav fel grupp i appens ledtrådar.
+    Okänd mall = egen böjning = oregelbundet (ro-conj-fi, -duce, -veni ...).
+    """
+    if tmpl.replace("ro-conj-", "") not in GRP:
+        return "irr"
+    stem = inf[2:] if inf.startswith("a ") else inf
+    p0 = (pres[0] or "") if pres else ""
+    if p0.endswith("ez"): return "a-ez"      # a lucra, a crea
+    if p0.endswith("esc"): return "i-esc"    # a vorbi, a urî
+    for end, g in (("î", "î"), ("ea", "ea"), ("a", "a"), ("e", "e"), ("i", "i")):
+        if stem.endswith(end): return g
+    return GRP[tmpl.replace("ro-conj-", "")]
+
 # Particip som också är riktiga adjektiv (behålls trots att de är verbformer)
 ADJ_PARTICIP_OK = {"mort", "trecut", "deschis", "închis", "obosit", "căsătorit", "cunoscut", "interesat",
                    "plăcut", "mulțumit", "îngrijorat", "pierdut", "ocupat", "supărat", "grăbit", "bolnav",
@@ -138,7 +155,6 @@ with open(os.path.join(RAW, "kaikki-ro.jsonl"), encoding="utf-8") as f:
             tmpl = next((t.get("name", "") for t in infl if t.get("name", "").startswith("ro-conj")), "")
             if not tmpl:
                 continue
-            grp = GRP.get(tmpl.replace("ro-conj-", ""), "irr")
             # Ta första förekomsten av varje tagg-kombination = primära tabellen
             first = {}
             for fm in forms:
@@ -163,6 +179,7 @@ with open(os.path.join(RAW, "kaikki-ro.jsonl"), encoding="utf-8") as f:
             imp2 = pick("imperative", "second-person", "singular") or ""
             ger = pick("gerund") or ""
             inf = "a " + w
+            grp = group_of(inf, tmpl, pres)
             verbs[w] = {"inf": inf, "grp": grp, "tmpl": tmpl, "en": gloss_of(d), "pres": pres, "part": part,
                         "sub3": sub3.replace("să ", ""), "imp2": imp2, "ger": ger,
                         "_fq": lemma_freq(pres + [part, sub3.replace("să ", ""), ger, w])}

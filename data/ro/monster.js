@@ -23,6 +23,12 @@ const RO = (() => {
     { ro: "noi", sv: "vi" }, { ro: "voi", sv: "ni" }, { ro: "ei / ele", sv: "de" },
   ];
   const AUX = ["am", "ai", "a", "am", "ați", "au"];
+
+  /* Kärnverb som lärs som helheter. EN lista, så att "regelbundna" och "oregelbundna"
+     aldrig delar verb: förut kunde a avea och a putea dyka upp i den regelbundna drillen. */
+  const IRREGULAR = ["a fi", "a avea", "a vrea", "a putea", "a lua", "a da", "a sta", "a bea",
+    "a ști", "a veni", "a mânca", "a duce", "a zice", "a scrie", "a trebui"];
+  const isIrr = (v) => v.grp === "irr" || IRREGULAR.includes(v.inf);
   const GRP = {
     a: "-a-gruppen (som a cânta: cânt, cânți, cântă…)",
     "a-ez": "-ez-gruppen (som a lucra: lucrez, lucrezi, lucrează…)",
@@ -213,7 +219,7 @@ const RO = (() => {
       more: `<p>Om ett <i>-a</i>-verb tar <i>-ez</i> eller inte, och om ett <i>-i</i>-verb tar <i>-esc</i>, syns inte på infinitiven – det lärs per verb. Tumregel: nyare och längre verb tar oftast <i>-ez/-esc</i>.</p>
         <p>Personliga pronomen (<i>eu, tu…</i>) utelämnas normalt, som i italienska och spanska. Ändelsen bär personen.</p>
         <p><i>-ea</i>-verb (<i>a vedea</i>) och <i>-i</i>-verb utan <i>-esc</i> (<i>a dormi</i>) finns också men är färre. Flera <i>-e</i>-verb har vokalväxling i 3:e person (<i>a putea: pot – poate</i>).</p>`,
-      pool: (L) => L.verbs.filter((v) => v.grp !== "irr"),
+      pool: (L) => L.verbs.filter((v) => !isIrr(v)),
       key: (v) => v.inf,
       gen(v) {
         const pi = Math.floor(Math.random() * 6);
@@ -236,7 +242,7 @@ const RO = (() => {
       examples: [["a fi, eu", "sunt", "jag är"], ["a avea, noi", "avem", "vi har"], ["a vrea, eu", "vreau", "jag vill"]],
       more: `<p><i>a avea</i> är dubbelt viktigt: det är också hjälpverbet i perfekt (<i>am mâncat</i> = jag har ätit / jag åt).</p>
         <p>Chunks värda att kunna utantill: <i>aș vrea</i> (jag skulle vilja), <i>nu știu</i> (jag vet inte), <i>pot să…?</i> (kan jag…?), <i>mi-e foame</i> (jag är hungrig – bokstavligen "mig är hunger").</p>`,
-      pool: (L) => L.verbs.filter((v) => ["a fi", "a avea", "a vrea", "a putea", "a lua", "a da", "a sta", "a bea", "a ști", "a veni", "a mânca", "a duce", "a zice", "a scrie", "a trebui"].includes(v.inf) || v.grp === "irr"),
+      pool: (L) => L.verbs.filter(isIrr),
       key: (v) => v.inf,
       gen(v) {
         let pi = Math.floor(Math.random() * 6);

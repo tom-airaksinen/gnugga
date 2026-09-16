@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "16 september 2026", ver: "v33", items: [
+    { t: "Regelbundna verb är nu bara regelbundna: a avea, a putea, a da och de andra kärnverben dyker inte längre upp i den regelbundna presensdrillen. De hör hemma i Oregelbundna kärnverb.", type: "fixed" },
+    { t: "Verbgruppen bestäms av infinitivens ändelse i stället för Wiktionarys mallnamn, så ledtrådarna säger rätt grupp. Tolv verb fick ny grupp, bland andra a face (-e) och a crea (-a med -ez).", type: "fixed" },
+  ] },
   { date: "16 september 2026", ver: "v32", items: [
     { t: "Nytt läge: Böj hela verbet. Skriv hela raden eu, tu, el/ea, noi, voi, ei/ele på en gång och kolla alla sex i ett svep. Finns på presens, oregelbundna och perfekt.", type: "new", hi: true, ico: "📋", desc: "Första gången med ett verb ligger eu och noi ifyllda som stöd. Tabellen räknas som en övning i statistiken men sex kort i repetitionen, ett per person." },
   ] },
