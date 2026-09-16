@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gnugga – prototyp: böja hela verbet</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1b1e; --surface:#17282c; --surface-2:#1f353a; --text:#eef4f2; --muted:#93a8a4; --accent:#3fcfa8; --accent-ink:#062b22; --warm:#f2b84b; --good:#5bbf72; --fail:#e0604f; --line:#2b444a; --track:rgba(255,255,255,.10); }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--bg); color:var(--text); font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  body { display:flex; justify-content:center; min-height:100dvh; }
+  #app { width:100%; max-width:480px; min-height:100dvh; display:flex; flex-direction:column; }
+  button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+  input { font:inherit; color:inherit; }
+
+  .hdr { display:flex; align-items:center; gap:10px; padding:calc(14px + env(safe-area-inset-top)) 16px 10px; }
+  .hdr h1 { font-size:1.3rem; font-weight:800; flex:1; display:flex; align-items:center; gap:8px; }
+  .logo { width:30px; height:30px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:900; font-size:16px; flex:none; }
+  .chip { display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:.78rem; font-weight:700; color:var(--muted); }
+  .pad { padding:4px 16px calc(28px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:16px; }
+  .eyebrow { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .muted { color:var(--muted); } .small { font-size:.85rem; } .tiny { font-size:.78rem; }
+
+  .card { background:var(--surface); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+  .card h3 { font-size:.98rem; font-weight:700; }
+  .card p + p { margin-top:2px; }
+
+  /* Förslagsram – samma idiom som statistikprototypen */
+  .prop { border:1px dashed rgba(242,184,75,.55); border-radius:18px; padding:14px 12px 12px; display:flex; flex-direction:column; gap:12px; position:relative; }
+  .prop .tag { position:absolute; top:-10px; left:12px; background:var(--warm); color:#2b1a00; font-size:.68rem; font-weight:800; padding:2px 9px; border-radius:999px; letter-spacing:.04em; }
+  .prop h2 { font-size:1.05rem; font-weight:800; }
+  .prop .why { font-size:.82rem; color:var(--warm); line-height:1.45; }
+  .prop .how { font-size:.8rem; color:var(--muted); line-height:1.5; border-top:1px solid var(--line); padding-top:10px; }
+  .prop .how b { color:var(--text); font-weight:700; }
+
+  /* Verbväljare */
+  .picker { display:flex; gap:6px; flex-wrap:wrap; }
+  .picker button { border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 11px; font-size:.82rem; font-weight:700; color:var(--muted); }
+  .picker button.on { background:rgba(63,207,168,.18); color:var(--accent); border-color:transparent; }
+
+  /* Paradigmtabell */
+  .verbhead { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .verbhead .inf { font-size:1.45rem; font-weight:800; letter-spacing:-.01em; }
+  .verbhead .sv { color:var(--warm); font-weight:700; }
+  .verbhead .grp { font-size:.75rem; color:var(--muted); }
+
+  .para { display:flex; flex-direction:column; gap:7px; }
+  .prow { display:grid; grid-template-columns:72px 1fr 26px; align-items:center; gap:9px; }
+  .prow .per { font-size:.86rem; color:var(--muted); font-weight:700; text-align:right; }
+  .prow input { width:100%; background:var(--surface-2); border:2px solid transparent; border-radius:11px; padding:11px 12px; font-size:1.05rem; font-weight:700; outline:none; }
+  .prow input:focus { border-color:var(--accent); }
+  .prow input:read-only { background:rgba(63,207,168,.12); color:var(--accent); border-color:transparent; }
+  .prow.ok input { border-color:var(--good); }
+  .prow.bad input { border-color:var(--fail); }
+  .prow.dia input { border-color:var(--warm); }
+  .prow .mark { font-size:1rem; text-align:center; }
+  .prow.ok .mark { color:var(--good); } .prow.bad .mark { color:var(--fail); } .prow.dia .mark { color:var(--warm); }
+  .prow .fix { grid-column:2 / span 2; font-size:.82rem; color:var(--fail); margin-top:-3px; }
+  .prow.dia .fix { color:var(--warm); }
+  .prow.now input { border-color:var(--accent); }
+  .prow.wait { opacity:.45; }
+
+  /* Statisk facittabell (förslag C) */
+  .facit { display:flex; flex-direction:column; gap:6px; }
+  .frow { display:grid; grid-template-columns:72px 1fr 34px; align-items:center; gap:9px; background:var(--surface-2); border-radius:11px; padding:9px 12px; }
+  .frow .per { font-size:.82rem; color:var(--muted); font-weight:700; text-align:right; }
+  .frow .form { font-size:1.05rem; font-weight:800; }
+  .frow .spk { font-size:1rem; text-align:center; }
+
+  .keys { display:flex; gap:6px; flex-wrap:wrap; }
+  .keys button { background:var(--surface-2); border-radius:9px; padding:7px 13px; font-weight:800; font-size:1rem; }
+
+  .cta { background:var(--accent); color:var(--accent-ink); border-radius:14px; padding:14px; font-weight:800; font-size:1rem; text-align:center; width:100%; }
+  .cta.sec { background:var(--surface-2); color:var(--text); }
+  .cta.ghost { background:transparent; border:1px solid var(--line); color:var(--muted); font-size:.88rem; padding:10px; }
+  .btnrow { display:flex; gap:8px; } .btnrow .cta { flex:1; }
+
+  .res { border-radius:12px; padding:10px 12px; font-size:.9rem; font-weight:700; }
+  .res.good { background:rgba(91,191,114,.16); color:var(--good); }
+  .res.mid { background:rgba(242,184,75,.16); color:var(--warm); }
+  .res.bad { background:rgba(224,96,79,.16); color:var(--fail); }
+
+  .toggle { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface-2); border-radius:12px; padding:10px 12px; }
+  .toggle .t { font-size:.86rem; font-weight:700; }
+  .toggle .d { font-size:.76rem; color:var(--muted); }
+  .sw { width:46px; height:28px; border-radius:999px; background:var(--track); position:relative; flex:none; }
+  .sw i { position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--muted); transition:.16s; }
+  .sw.on { background:rgba(63,207,168,.35); } .sw.on i { left:21px; background:var(--accent); }
+
+  .prog { display:flex; align-items:center; gap:10px; }
+  .prog .bar { flex:1; height:8px; border-radius:999px; background:var(--track); overflow:hidden; }
+  .prog .bar i { display:block; height:100%; background:var(--accent); border-radius:999px; transition:width .2s; }
+  .prog .cnt { font-size:.8rem; color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums; }
+
+  ol.rec { padding-left:18px; display:flex; flex-direction:column; gap:8px; font-size:.9rem; }
+  ol.rec b { color:var(--accent); }
+  .hidden { display:none !important; }
+
+  /* D: gruppass */
+  .queue { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .qdot { font-size:.78rem; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--surface-2); color:var(--muted); }
+  .qdot.now { background:rgba(63,207,168,.18); color:var(--accent); }
+  .qdot.done { color:var(--good); }
+  .cmpwrap { overflow-x:auto; }
+  .cmp { display:grid; gap:4px; min-width:100%; }
+  .cmp .h { font-size:.72rem; color:var(--muted); font-weight:700; text-transform:none; }
+  .cmp .c { background:var(--surface-2); border-radius:8px; padding:7px 8px; font-size:.82rem; font-weight:700; white-space:nowrap; }
+  .cmp .c em { font-style:normal; color:var(--accent); }
+  .cmp .p { font-size:.76rem; color:var(--muted); font-weight:700; align-self:center; }
+  .endings { font-size:.86rem; font-weight:800; color:var(--accent); letter-spacing:.01em; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <span class="logo">G</span>
+    <h1>Böja hela verbet</h1>
+    <span class="chip">Skiss</span>
+  </div>
+
+  <div class="pad">
+
+    <div class="card">
+      <h3>Problemet</h3>
+      <p class="small muted">Dagens övningar ger en form i taget, slumpad person och slumpat verb: <i>presens för noi av a vorbi</i>. Det tränar uppslagning, inte mönstret. Paradigmet – hela raden eu, tu, el, noi, voi, ei – är det som gör att ändelserna hänger ihop till ett system.</p>
+      <p class="small muted">Fyra förslag nedan, alla klickbara med riktiga former ur Gnuggas lexikon. De tre första handlar om <b>ett</b> verb i taget. Det fjärde tar flera verb ur samma grupp i rad, så att ändelserna upprepas tills de sitter.</p>
+      <p class="small muted">Byt verb här så följer de tre första med.</p>
+      <div class="eyebrow" style="margin-top:4px">Verb att testa med</div>
+      <div class="picker" id="picker"></div>
+    </div>
+
+    <!-- ===================== FÖRSLAG A ===================== -->
+    <section class="prop">
+      <span class="tag">FÖRSLAG A</span>
+      <h2>Hela tabellen på en gång</h2>
+      <p class="why">Du fyller i alla sex formerna och trycker Kolla en gång. Maximal överblick: du ser ändelserna som en kolumn och upptäcker själv var stammen växlar.</p>
+
+      <div class="card">
+        <div class="verbhead" id="a-head"></div>
+        <div class="para" id="a-para"></div>
+        <div class="keys" id="a-keys"></div>
+        <div class="toggle" id="a-scaffold">
+          <span><span class="t">Stödhjul</span><br /><span class="d">Första gången ett verb dyker upp är eu och noi ifyllda</span></span>
+          <span class="sw" id="a-sw"><i></i></span>
+        </div>
+        <div id="a-res"></div>
+        <div class="btnrow">
+          <button class="cta" id="a-check">Kolla alla sex</button>
+          <button class="cta sec hidden" id="a-again">Gör om</button>
+        </div>
+      </div>
+
+      <p class="how"><b>I appen:</b> ett eget läge på verbmönstrens skärm, bredvid "Gnugga bara det här mönstret". Sex svar blir sex kort i lådsystemet på en gång, så ett enda paradigm matar repetitionen lika mycket som ett halvt pass. <b>Rätt på tid</b> mäts inte här: att skriva sex former tar tid även när man kan dem.</p>
+    </section>
+
+    <!-- ===================== FÖRSLAG B ===================== -->
+    <section class="prop">
+      <span class="tag">FÖRSLAG B</span>
+      <h2>Kedjan</h2>
+      <p class="why">Samma verb sex gånger i rad, en person i taget, i fast ordning. Tabellen fylls i ovanför medan du går. Lägre tröskel än A och passar mitt i ett vanligt pass, men du ser ändå hela raden växa fram.</p>
+
+      <div class="card">
+        <div class="verbhead" id="b-head"></div>
+        <div class="prog"><div class="bar"><i id="b-bar" style="width:0%"></i></div><span class="cnt" id="b-cnt">0/6</span></div>
+        <div class="para" id="b-para"></div>
+        <div class="keys" id="b-keys"></div>
+        <div id="b-res"></div>
+        <div class="btnrow">
+          <button class="cta" id="b-go">Svara</button>
+          <button class="cta sec hidden" id="b-again">Kör igen</button>
+        </div>
+      </div>
+
+      <p class="how"><b>I appen:</b> en ny övningstyp som blandas in som de andra. Den räknas som <b>en</b> övning i passets 12, men uppdaterar sex kort. Kedjan kan också tidsättas senare, som "Rätt eller fel?", när paradigmet börjar sitta.</p>
+    </section>
+
+    <!-- ===================== FÖRSLAG C ===================== -->
+    <section class="prop">
+      <span class="tag">FÖRSLAG C</span>
+      <h2>Säg hela verbet</h2>
+      <p class="why">Ingen skrivning alls. Du rabblar alla sex högt, visar facit, bedömer dig själv. Det är så paradigm traditionellt nöts, och det är den enda varianten du kan köra medan du går längs en gata i Bukarest.</p>
+
+      <div class="card">
+        <div class="verbhead" id="c-head"></div>
+        <p class="small muted" id="c-prompt">Säg alla sex formerna högt, i ordningen eu, tu, el/ea, noi, voi, ei/ele.</p>
+        <div class="facit hidden" id="c-facit"></div>
+        <div id="c-res"></div>
+        <div class="btnrow">
+          <button class="cta" id="c-show">Visa facit</button>
+        </div>
+        <div class="btnrow hidden" id="c-grade">
+          <button class="cta sec" id="c-ok" style="color:var(--good)">Alla satt</button>
+          <button class="cta sec" id="c-no" style="color:var(--fail)">Några vacklade</button>
+        </div>
+      </div>
+
+      <p class="how"><b>I appen:</b> en storebror till "Säg det", med samma självbedömning. Svarar du "några vacklade" kan appen lägga just det verbet överst i nästa pass, och erbjuda förslag A på det direkt. Talsyntesen kan läsa hela raden i följd så du hör rytmen.</p>
+    </section>
+
+    <!-- ===================== FÖRSLAG D ===================== -->
+    <section class="prop">
+      <span class="tag">FÖRSLAG D</span>
+      <h2>Gruppass: tre verb ur samma mönster</h2>
+      <p class="why">Ett paradigm visar hur ett verb böjs. Tre paradigm ur samma grupp visar <i>regeln</i>: samma ändelser sitter kvar medan stammen byts. Sista skärmen ställer de tre bredvid varandra så mönstret blir omöjligt att missa.</p>
+
+      <div class="card">
+        <div class="eyebrow">Välj mönster</div>
+        <div class="picker" id="d-groups"></div>
+        <div class="queue" id="d-queue"></div>
+        <div id="d-play">
+          <div class="verbhead" id="d-head" style="margin:6px 0 8px"></div>
+          <div class="para" id="d-para"></div>
+          <div class="keys" id="d-keys" style="margin-top:9px"></div>
+          <div id="d-res" style="margin-top:9px"></div>
+          <div class="btnrow" style="margin-top:9px">
+            <button class="cta" id="d-check">Kolla</button>
+            <button class="cta sec hidden" id="d-next">Nästa verb</button>
+          </div>
+        </div>
+        <div id="d-sum" class="hidden"></div>
+      </div>
+
+      <p class="how"><b>I appen:</b> ett gruppass som du startar från verbmönstret, eller som appen föreslår när ett mönster står stilla. <b>Oregelbundna hålls isär</b> – de har ingen gemensam ändelse och lärs som hela rader. Stamväxlingen <i>o → oa</i> går tvärs över grupperna (întorc men întoarce, dorm men doarme), så den får vara ett eget mönster att drilla.</p>
+    </section>
+
+    <!-- ===================== REKOMMENDATION ===================== -->
+    <div class="card">
+      <h3>Vad jag skulle bygga</h3>
+      <ol class="rec">
+        <li><b>A först.</b> Tabellen är motorn: enklast att bygga, och du väljer själv när du vill ta i. Stödhjulen gör att även a fi går att börja med.</li>
+        <li><b>D direkt efter.</b> Gruppasset är egentligen bara tre A i kö plus jämförelseskärmen på slutet, men det är där mönstret generaliserar. Det är det du efterfrågar när du vill drilla întoarce-växlingen.</li>
+        <li><b>C som muntlig variant.</b> Nästan gratis eftersom självbedömningen redan finns, och det enda som funkar utan händer före resan.</li>
+        <li><b>B sist,</b> om du märker att du inte orkar öppna A självmant. Då kommer paradigmen till dig mitt i passet i stället.</li>
+      </ol>
+      <p class="small muted">Två saker att bestämma. Ska ett paradigm räknas som sex övningar i statistiken eller som en? Jag lutar åt sex kort i lådsystemet men en rad i dagsstatistiken, annars ser en kväll med tabeller ut som ett rekordpass. Och ska gruppasset välja verben åt dig efter frekvens, eller ska du få peka ut dem själv?</p>
+    </div>
+
+    <p class="tiny muted" style="text-align:center">Skiss för Gnugga · riktiga former ur lexikonet · ingenting sparas</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+const VERBS = [
+  { inf:"a fi",    sv:"vara",   grp:"oregelbundet",        pres:["sunt","ești","este","suntem","sunteți","sunt"] },
+  { inf:"a avea",  sv:"ha",     grp:"oregelbundet",        pres:["am","ai","are","avem","aveți","au"] },
+  { inf:"a lucra", sv:"arbeta", grp:"-a med -ez",          pres:["lucrez","lucrezi","lucrează","lucrăm","lucrați","lucrează"] },
+  { inf:"a vorbi", sv:"prata",  grp:"-i med -esc",         pres:["vorbesc","vorbești","vorbește","vorbim","vorbiți","vorbesc"] },
+  { inf:"a dormi", sv:"sova",   grp:"-i utan -esc",        pres:["dorm","dormi","doarme","dormim","dormiți","dorm"] },
+  { inf:"a merge", sv:"gå",     grp:"-e",                  pres:["merg","mergi","merge","mergem","mergeți","merg"] },
+  { inf:"a putea", sv:"kunna",  grp:"-ea, vokalväxling",   pres:["pot","poți","poate","putem","puteți","pot"] },
+];
+const PERS = ["eu", "tu", "el / ea", "noi", "voi", "ei / ele"];
+const DIA = ["ă", "â", "î", "ș", "ț"];
+
+const $ = (s, r = document) => r.querySelector(s);
+const norm = (s) => (s || "").trim().toLowerCase().replace(/ş/g, "ș").replace(/ţ/g, "ț");
+const bare = (s) => norm(s).replace(/ă|â/g, "a").replace(/î/g, "i").replace(/ș/g, "s").replace(/ț/g, "t");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+let verb = VERBS[0];
+let scaffold = true;
+
+/* ---------- talsyntes: bara om det finns en rumänsk röst ---------- */
+let roVoice = null;
+function findVoice() {
+  try { roVoice = (speechSynthesis.getVoices() || []).find((v) => (v.lang || "").toLowerCase().startsWith("ro")) || null; } catch (_) {}
+  document.querySelectorAll(".spk").forEach((b) => b.classList.toggle("hidden", !roVoice));
+}
+if ("speechSynthesis" in window) { findVoice(); speechSynthesis.onvoiceschanged = findVoice; }
+function say(t) {
+  if (!roVoice) return;
+  try { const u = new SpeechSynthesisUtterance(t); u.voice = roVoice; u.lang = "ro-RO"; u.rate = .9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (_) {}
+}
+
+/* ---------- verbväljare ---------- */
+function renderPicker() {
+  $("#picker").innerHTML = VERBS.map((v, i) => `<button data-i="${i}" class="${v === verb ? "on" : ""}">${esc(v.inf)}</button>`).join("");
+  $("#picker").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    verb = VERBS[+b.dataset.i]; renderPicker(); resetA(); resetB(); resetC();
+  }));
+}
+const headHtml = (v) => `<span class="inf">${esc(v.inf)}</span><span class="sv">${esc(v.sv)}</span><span class="grp">${esc(v.grp)}</span>`;
+
+/* ---------- diakritknappar ---------- */
+function keyRow(el, getInput) {
+  el.innerHTML = DIA.map((d) => `<button data-d="${d}">${d}</button>`).join("");
+  el.querySelectorAll("button").forEach((b) => b.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const inp = getInput(); if (!inp) return;
+    const s = inp.selectionStart ?? inp.value.length;
+    inp.value = inp.value.slice(0, s) + b.dataset.d + inp.value.slice(inp.selectionEnd ?? s);
+    inp.focus(); inp.setSelectionRange(s + 1, s + 1);
+  }));
+}
+
+/* ===================== A: hela tabellen ===================== */
+function resetA() {
+  $("#a-head").innerHTML = headHtml(verb);
+  const pre = scaffold ? [0, 3] : [];
+  $("#a-para").innerHTML = PERS.map((p, i) => `
+    <div class="prow" data-i="${i}">
+      <span class="per">${esc(p)}</span>
+      <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false"
+             value="${pre.includes(i) ? esc(verb.pres[i]) : ""}" ${pre.includes(i) ? "readonly" : ""} />
+      <span class="mark"></span>
+    </div>`).join("");
+  $("#a-res").innerHTML = "";
+  $("#a-check").classList.remove("hidden");
+  $("#a-again").classList.add("hidden");
+  $("#a-sw").classList.toggle("on", scaffold);
+}
+function checkA() {
+  let right = 0, dia = 0, total = 0;
+  $("#a-para").querySelectorAll(".prow").forEach((row) => {
+    const i = +row.dataset.i, inp = row.querySelector("input");
+    row.querySelector(".fix")?.remove();
+    if (inp.readOnly) { row.className = "prow ok"; row.querySelector(".mark").textContent = "✓"; return; }
+    total++;
+    const v = norm(inp.value), a = norm(verb.pres[i]);
+    if (v === a) { row.className = "prow ok"; row.querySelector(".mark").textContent = "✓"; right++; }
+    else if (v && bare(v) === bare(a)) {
+      row.className = "prow dia"; row.querySelector(".mark").textContent = "~"; dia++;
+      row.insertAdjacentHTML("beforeend", `<div class="fix">Bara krumelurerna: <b>${esc(verb.pres[i])}</b></div>`);
+    } else {
+      row.className = "prow bad"; row.querySelector(".mark").textContent = "✗";
+      row.insertAdjacentHTML("beforeend", `<div class="fix">Rätt: <b>${esc(verb.pres[i])}</b></div>`);
+    }
+  });
+  const cls = right === total ? "good" : right + dia >= total - 1 ? "mid" : "bad";
+  const extra = dia ? ` · ${dia} med bara krumelurfel` : "";
+  $("#a-res").innerHTML = `<div class="res ${cls}">${right} av ${total} rätt${extra}</div>`;
+  $("#a-check").classList.add("hidden");
+  $("#a-again").classList.remove("hidden");
+}
+
+/* ===================== B: kedjan ===================== */
+let bStep = 0;
+function resetB() {
+  bStep = 0;
+  $("#b-head").innerHTML = headHtml(verb);
+  $("#b-res").innerHTML = "";
+  $("#b-go").classList.remove("hidden");
+  $("#b-again").classList.add("hidden");
+  drawB();
+}
+function drawB() {
+  $("#b-para").innerHTML = PERS.map((p, i) => {
+    const done = i < bStep, now = i === bStep;
+    const cls = done ? "prow ok" : now ? "prow now" : "prow wait";
+    const val = done ? esc(verb.pres[i]) : "";
+    return `<div class="prow ${cls.replace("prow ", "")}" data-i="${i}">
+      <span class="per">${esc(p)}</span>
+      <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" value="${val}" ${done || !now ? "readonly" : ""} />
+      <span class="mark">${done ? "✓" : ""}</span>
+    </div>`;
+  }).join("");
+  $("#b-bar").style.width = `${Math.round(100 * bStep / 6)}%`;
+  $("#b-cnt").textContent = `${bStep}/6`;
+  const inp = $("#b-para .now input");
+  if (inp) { inp.focus(); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") stepB(); }); }
+}
+function stepB() {
+  if (bStep >= 6) return;
+  const row = $(`#b-para .prow[data-i="${bStep}"]`), inp = row.querySelector("input");
+  const v = norm(inp.value), a = norm(verb.pres[bStep]);
+  if (v !== a) {
+    row.className = "prow bad";
+    row.querySelector(".mark").textContent = "✗";
+    row.querySelector(".fix")?.remove();
+    row.insertAdjacentHTML("beforeend", `<div class="fix">${bare(v) === bare(a) && v ? "Bara krumelurerna" : "Rätt"}: <b>${esc(verb.pres[bStep])}</b></div>`);
+    inp.readOnly = true;
+    bStep++;
+    setTimeout(() => { if (bStep < 6) { const keep = row.outerHTML; drawB(); $(`#b-para .prow[data-i="${bStep - 1}"]`).outerHTML = keep; } else finishB(); }, 1100);
+    return;
+  }
+  bStep++;
+  if (bStep >= 6) { drawB(); finishB(); } else drawB();
+}
+function finishB() {
+  $("#b-res").innerHTML = `<div class="res good">Hela raden klar · ${verb.pres.join(" · ")}</div>`;
+  $("#b-go").classList.add("hidden");
+  $("#b-again").classList.remove("hidden");
+  if (roVoice) say(verb.pres.join(", "));
+}
+
+/* ===================== C: säg hela verbet ===================== */
+function resetC() {
+  $("#c-head").innerHTML = headHtml(verb);
+  $("#c-facit").classList.add("hidden");
+  $("#c-facit").innerHTML = PERS.map((p, i) => `
+    <div class="frow"><span class="per">${esc(p)}</span><span class="form">${esc(verb.pres[i])}</span>
+    <button class="spk" data-say="${esc(verb.pres[i])}">🔊</button></div>`).join("");
+  $("#c-facit").querySelectorAll(".spk").forEach((b) => b.addEventListener("click", () => say(b.dataset.say)));
+  $("#c-res").innerHTML = "";
+  $("#c-show").classList.remove("hidden");
+  $("#c-grade").classList.add("hidden");
+  $("#c-prompt").classList.remove("hidden");
+  findVoice();
+}
+$("#c-show").addEventListener("click", () => {
+  $("#c-facit").classList.remove("hidden");
+  $("#c-show").classList.add("hidden");
+  $("#c-grade").classList.remove("hidden");
+  $("#c-prompt").classList.add("hidden");
+  if (roVoice) say(verb.pres.join(", "));
+});
+$("#c-ok").addEventListener("click", () => {
+  $("#c-res").innerHTML = `<div class="res good">Bra – verbet glesas ut i repetitionen</div>`;
+  $("#c-grade").classList.add("hidden");
+});
+$("#c-no").addEventListener("click", () => {
+  $("#c-res").innerHTML = `<div class="res mid">Då kommer ${esc(verb.inf)} tillbaka i nästa pass, och appen föreslår tabellen (förslag A) på just det verbet</div>`;
+  $("#c-grade").classList.add("hidden");
+});
+
+/* ---------- knappar ---------- */
+$("#a-check").addEventListener("click", checkA);
+$("#a-again").addEventListener("click", resetA);
+$("#a-sw").addEventListener("click", () => { scaffold = !scaffold; resetA(); });
+$("#b-go").addEventListener("click", stepB);
+$("#b-again").addEventListener("click", resetB);
+keyRow($("#a-keys"), () => document.activeElement && document.activeElement.tagName === "INPUT" ? document.activeElement : $("#a-para input:not([readonly])"));
+keyRow($("#b-keys"), () => $("#b-para .now input"));
+
+/* ===================== D: gruppass ===================== */
+const GROUPS = [
+  { name:"-a med -ez", show:"-ez · -ezi · -ează · -ăm · -ați · -ează",
+    end:["ez","ezi","ează","ăm","ați","ează"],
+    verbs:[
+      { inf:"a lucra", sv:"arbeta", pres:["lucrez","lucrezi","lucrează","lucrăm","lucrați","lucrează"] },
+      { inf:"a salva", sv:"rädda",  pres:["salvez","salvezi","salvează","salvăm","salvați","salvează"] },
+      { inf:"a urma",  sv:"följa",  pres:["urmez","urmezi","urmează","urmăm","urmați","urmează"] } ] },
+  { name:"-i med -esc", show:"-esc · -ești · -ește · -im · -iți · -esc",
+    end:["esc","ești","ește","im","iți","esc"],
+    verbs:[
+      { inf:"a vorbi",  sv:"prata",   pres:["vorbesc","vorbești","vorbește","vorbim","vorbiți","vorbesc"] },
+      { inf:"a găsi",   sv:"hitta",   pres:["găsesc","găsești","găsește","găsim","găsiți","găsesc"] },
+      { inf:"a folosi", sv:"använda", pres:["folosesc","folosești","folosește","folosim","folosiți","folosesc"] } ] },
+  { name:"-e", show:"– · -i · -e · -em · -eți · –",
+    end:["","i","e","em","eți",""],
+    verbs:[
+      { inf:"a spune",  sv:"säga",       pres:["spun","spui","spune","spunem","spuneți","spun"] },
+      { inf:"a merge",  sv:"gå",         pres:["merg","mergi","merge","mergem","mergeți","merg"] },
+      { inf:"a ajunge", sv:"komma fram", pres:["ajung","ajungi","ajunge","ajungem","ajungeți","ajung"] } ] },
+  { name:"o → oa i stammen", oa:true,
+    note:"Ändelserna kommer från verbets egen grupp – det gemensamma sitter i stammen. <b>o</b> i eu och ei/ele, <b>oa</b> i el/ea. Växlingen går tvärs över grupperna, och det är den som brukar fastna sist.",
+    verbs:[
+      { inf:"a întoarce", sv:"vända", pres:["întorc","întorci","întoarce","întoarcem","întoarceți","întorc"] },
+      { inf:"a dormi",    sv:"sova",  pres:["dorm","dormi","doarme","dormim","dormiți","dorm"] },
+      { inf:"a purta",    sv:"bära",  pres:["port","porți","poartă","purtăm","purtați","poartă"] } ] },
+  { name:"Oregelbundna",
+    note:"Ingen gemensam ändelse att luta sig mot. De här lärs som hela rader, ett verb i taget – och därför ska de aldrig blandas in i ett gruppass med de regelbundna.",
+    verbs:[
+      { inf:"a fi",   sv:"vara",  pres:["sunt","ești","este","suntem","sunteți","sunt"] },
+      { inf:"a avea", sv:"ha",    pres:["am","ai","are","avem","aveți","au"] },
+      { inf:"a veni", sv:"komma", pres:["vin","vii","vine","venim","veniți","vin"] } ] },
+];
+let dG = 0, dI = 0;
+
+function renderD() {
+  $("#d-groups").innerHTML = GROUPS.map((g, i) => `<button data-i="${i}" class="${i === dG ? "on" : ""}">${esc(g.name)}</button>`).join("");
+  $("#d-groups").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { dG = +b.dataset.i; dI = 0; renderD(); }));
+  const g = GROUPS[dG];
+  $("#d-queue").innerHTML = g.verbs.map((v, i) => `<span class="qdot ${i < dI ? "done" : i === dI ? "now" : ""}">${i < dI ? "✓ " : ""}${esc(v.inf)}</span>`).join("");
+  $("#d-sum").classList.add("hidden");
+  $("#d-play").classList.remove("hidden");
+  const v = g.verbs[dI];
+  $("#d-head").innerHTML = `<span class="inf">${esc(v.inf)}</span><span class="sv">${esc(v.sv)}</span><span class="grp">verb ${dI + 1} av 3</span>`;
+  $("#d-para").innerHTML = PERS.map((p, i) => `
+    <div class="prow" data-i="${i}">
+      <span class="per">${esc(p)}</span>
+      <input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <span class="mark"></span>
+    </div>`).join("");
+  $("#d-res").innerHTML = "";
+  $("#d-check").classList.remove("hidden");
+  $("#d-next").classList.add("hidden");
+}
+function checkD() {
+  const v = GROUPS[dG].verbs[dI];
+  let right = 0;
+  $("#d-para").querySelectorAll(".prow").forEach((row) => {
+    const i = +row.dataset.i, inp = row.querySelector("input");
+    row.querySelector(".fix")?.remove();
+    const a = norm(v.pres[i]), val = norm(inp.value);
+    if (val === a) { row.className = "prow ok"; row.querySelector(".mark").textContent = "✓"; right++; }
+    else if (val && bare(val) === bare(a)) {
+      row.className = "prow dia"; row.querySelector(".mark").textContent = "~";
+      row.insertAdjacentHTML("beforeend", `<div class="fix">Bara krumelurerna: <b>${esc(v.pres[i])}</b></div>`);
+    } else {
+      row.className = "prow bad"; row.querySelector(".mark").textContent = "✗";
+      row.insertAdjacentHTML("beforeend", `<div class="fix">Rätt: <b>${esc(v.pres[i])}</b></div>`);
+    }
+  });
+  $("#d-res").innerHTML = `<div class="res ${right === 6 ? "good" : right >= 4 ? "mid" : "bad"}">${right} av 6 rätt</div>`;
+  $("#d-check").classList.add("hidden");
+  $("#d-next").classList.remove("hidden");
+  $("#d-next").textContent = dI < 2 ? "Nästa verb" : "Visa mönstret";
+}
+function markEnd(form, i) {
+  const g = GROUPS[dG];
+  if (g.oa) return esc(form).replace(/oa/g, "<em>oa</em>").replace(/(^|[^ao])o(?!a)/g, "$1<em>o</em>");
+  const e = g.end && g.end[i];
+  if (!e || !form.endsWith(e)) return esc(form);
+  return esc(form.slice(0, form.length - e.length)) + `<em>${esc(e)}</em>`;
+}
+function summaryD() {
+  const g = GROUPS[dG];
+  let html = `<div class="cmpwrap"><div class="cmp" style="grid-template-columns:54px repeat(${g.verbs.length},1fr)">`;
+  html += `<span class="h"></span>` + g.verbs.map((v) => `<span class="h">${esc(v.inf)}</span>`).join("");
+  PERS.forEach((p, i) => {
+    html += `<span class="p">${esc(p)}</span>` + g.verbs.map((v) => `<span class="c">${markEnd(v.pres[i], i)}</span>`).join("");
+  });
+  html += `</div></div>`;
+  html += g.show
+    ? `<div class="endings" style="margin-top:10px">${esc(g.show)}</div><p class="small muted" style="margin-top:4px">Samma sex ändelser i alla tre. Det enda som byts är stammen.</p>`
+    : `<p class="small muted" style="margin-top:10px">${g.note}</p>`;
+  html += `<div class="btnrow" style="margin-top:12px"><button class="cta sec" id="d-restart">Kör gruppen igen</button></div>`;
+  $("#d-sum").innerHTML = html;
+  $("#d-sum").classList.remove("hidden");
+  $("#d-play").classList.add("hidden");
+  $("#d-queue").innerHTML = g.verbs.map((v) => `<span class="qdot done">✓ ${esc(v.inf)}</span>`).join("");
+  $("#d-restart").addEventListener("click", () => { dI = 0; renderD(); });
+}
+$("#d-check").addEventListener("click", checkD);
+$("#d-next").addEventListener("click", () => { if (dI < 2) { dI++; renderD(); } else summaryD(); });
+keyRow($("#d-keys"), () => document.activeElement && document.activeElement.tagName === "INPUT" ? document.activeElement : $("#d-para input"));
+
+renderPicker(); resetA(); resetB(); resetC(); renderD();
+</script>
+</body>
+</html>

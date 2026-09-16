@@ -40,3 +40,8 @@
 - [ ] Dativmeningarna blir stela för tredje person ("Läraren säger honom / henne sanningen"). Egna svenska mallar per pronomen?
 - [ ] Pluralövningen böjer även mängdord (întuneric → întunericurile). Formerna finns i Wiktionary men känns konstiga – spärra även i plural?
 - [ ] AI-förklaring även i facitläget på Säg det, alltså innan man bedömt sig själv? Knappen finns redan i feedbackrutan direkt efter bedömningen, så Tom avvaktar och testar i verkligt bruk först (2026-09-13)
+
+## Böja hela verbet (skiss 2026-09-16)
+- [ ] Vilket av förslagen i `mockups/bojning.html` ska byggas först? (A hela tabellen, B kedjan, C säg hela verbet, D gruppass med tre verb ur samma mönster)
+- [ ] Ska ett paradigm räknas som sex övningar i dagsstatistiken eller som en? (Förslag: sex kort i lådsystemet, en rad i statistiken)
+- [ ] Ska gruppasset välja verben efter frekvens eller ska man peka ut dem själv?

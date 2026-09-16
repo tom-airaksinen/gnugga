@@ -96,5 +96,7 @@ skrivit över riktiga framsteg med sitt äldre dataformat.
 ## Mappar
 
 - `docs/` – plan, forskningsunderlag, datakällor, öppna frågor
-- `mockups/` – den första klickbara prototypen (ersatt av appen)
+- `mockups/` – klickbara skisser: `gnugga-prototyp.html` (den första, ersatt av appen),
+  `statistik.html` (flikar & statistikförslag) och `bojning.html` (fyra förslag för att böja
+  hela verbet, inkl. gruppass per verbgrupp)
 - `scripts/` – pipeline, ikon-SVG, rökprov
