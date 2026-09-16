@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v31";
+const APP_VERSION = "v32";
 // Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
 // glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
 if (window.self !== window.top) document.documentElement.classList.add("embedded");
@@ -114,7 +114,7 @@ function chooseLemma(p) {
 }
 function dueCount() {
   const t = today(); let n = 0;
-  for (const k in P.items) if (P.items[k].due <= t && !isPaused(k.split("|")[0])) n++;
+  for (const k in P.items) if (P.items[k].due <= t && !k.includes("#") && !isPaused(k.split("|")[0])) n++;
   return n;
 }
 
@@ -221,13 +221,14 @@ function openPattern(id) {
   $("#p-title").textContent = p.name;
   const lv = $("#p-lvl"); const l = level(id); lv.className = `lvl l${l.n}`; lv.textContent = l.t;
   // ordlista: svaga/starka lemman i mönstret
-  const items = Object.entries(P.items).filter(([k]) => k.startsWith(id + "|")).map(([k, v]) => ({ key: k.split("|")[1], ...v }));
+  const items = Object.entries(P.items).filter(([k]) => k.startsWith(id + "|") && !k.includes("#")).map(([k, v]) => ({ key: k.split("|")[1], ...v }));
   const weak = items.filter((i) => i.box <= 1).slice(0, 12), strong = items.filter((i) => i.box >= 4).slice(0, 12);
   $("#p-body").innerHTML = ruleCard(p) +
     (s.seen ? `<div class="card"><h3>Din nivå</h3><div class="small muted">${s.seen} övningar · ${Math.round(100 * accOf(s))} % rätt${s.hist && s.hist.length >= HIST_N ? ` (senaste ${HIST_N})` : ``} · ${s.fast} rätt på tid · ${(s.dayList || []).length} dagar · ${items.length} ord gnuggade</div><div class="bar" style="height:8px"><i style="width:${pct(id)}%"></i></div><div class="small muted">Lärt = minst 15 övningar och 70 % rätt. Automatiskt = minst 40 övningar, 85 % rätt, 15 rätt på tid och tränat minst tre olika dagar. Procenten räknas på dina senaste 20 svar, så gamla fel hänger inte kvar.</div>
       ${weak.length ? `<div class="small muted" style="margin-top:6px">Svagast just nu</div><div class="wordlist">${weak.map((i) => `<span class="weak">${esc(i.key)}</span>`).join("")}</div>` : ""}
       ${strong.length ? `<div class="small muted" style="margin-top:6px">Sitter bra</div><div class="wordlist">${strong.map((i) => `<span class="strong">${esc(i.key)}</span>`).join("")}</div>` : ""}</div>` : "") +
     `<button class="cta" id="p-only">${s.intro ? "Gnugga bara det här mönstret" : "Börja med det här mönstret"} · ${Math.min(SET.passLen, 12)} övningar</button>
+    ${p.paradigm ? `<button class="cta sec" id="p-table">Böj hela verbet${tableDue(p).length ? ` · ${tableDue(p).length} att repetera` : ""}</button>` : ""}
     ${active().length > 1 ? `<button class="cta sec" id="p-mixed">Blandat pass med alla aktiva</button>` : ""}
     <div class="links center">${aiBtn(`Förklara ${p.name.toLowerCase()} i rumänsk grammatik för en svensktalande nybörjare: regeln, de vanligaste undantagen, och fem exempel med översättning. Jämför gärna med svenskan.`, "p-ai")}</div>
     <div class="note">${s.intro ? "Blandat pass är bäst när du kan grunden. \"Bara det här\" passar när ett mönster känns nytt eller skakigt." : "Första gången: läs regeln, sedan kör du övningar på bara det här mönstret."}</div>
@@ -238,6 +239,7 @@ function openPattern(id) {
     toast(isPaused(id) ? "Pausat" : "Återupptaget"); openPattern(id);
   });
   const m = $("#p-mixed"); if (m) m.addEventListener("click", () => startSession({}));
+  const tb = $("#p-table"); if (tb) tb.addEventListener("click", () => openTable(id));
   bindSpeak($("#p-body")); bindAi($("#p-body"));
   show("s-pattern");
 }
@@ -486,6 +488,133 @@ function openExternal(url) {
 const aiBtn = (q, id) => `<button class="aibtn" id="${id}" data-q="${esc(q)}">${AI_STARS} AI-förklaring</button>`;
 function bindAi(root) { $$(".aibtn", root).forEach((b) => b.addEventListener("click", () => { track("ai-kontext"); openExternal(aiUrl(b.dataset.q)); })); }
 
+/* ============================================================
+   Böj hela verbet – hela paradigmet i ett svep
+   Sex kort i lådsystemet (ett per person, nyckeln "mönster|lemma#0..5") men EN rad
+   i dagsstatistiken: annars ser en kväll med tabeller ut som ett rekordpass.
+   Korten med # drillas bara här och räknas därför inte bland "förfallna" på hem.
+   ============================================================ */
+const tblKey = (key, i) => key + "#" + i;
+let TBL = null;
+
+const tablePool = (p) => p.pool(L).filter((x) => p.paradigm.ok(x));
+/* "Aldrig gjord" = inget av de sex korten finns. (Kolla inte bara rad 0 – den är
+   ifylld av stödhjulet och får därför aldrig något kort första gången.) */
+const tableSeen = (p, lem) => [0, 1, 2, 3, 4, 5].some((i) => P.items[itemKey(p.id, tblKey(p.key(lem), i))]);
+function tableDue(p) {
+  const t = today();
+  return tablePool(p).filter((x) => {
+    for (let i = 0; i < 6; i++) { const it = P.items[itemKey(p.id, tblKey(p.key(x), i))]; if (it && it.due <= t) return true; }
+    return false;
+  });
+}
+function chooseTableLemma(p) {
+  const due = tableDue(p);
+  if (due.length && Math.random() < .7) return pick(due);
+  const fresh = tablePool(p).filter((x) => !tableSeen(p, x));
+  if (fresh.length) return fresh[0];                 // frekvensordning: vanligaste först
+  return due.length ? pick(due) : pick(tablePool(p));
+}
+
+function openTable(pid, lemma) {
+  const p = byId[pid];
+  const lem = lemma || chooseTableLemma(p);
+  const forms = p.paradigm.forms(lem);
+  const name = lem.inf || p.key(lem);
+  const first = !tableSeen(p, lem);
+  const pre = first ? [0, 3] : [];                   // stödhjul första gången: eu och noi
+  TBL = { p, lem, forms, pre, checked: false };
+  const due = tableDue(p).length;
+  $("#tbl-title").textContent = "Böj hela verbet";
+  $("#tbl-count").textContent = p.short;
+  $("#tbl-body").innerHTML = `
+    <div class="card">
+      <div class="vhead"><span class="inf">${esc(name)}</span><span class="sv">${esc(gloss(lem))}</span></div>
+      <div class="para" id="tbl-para">${p.paradigm.rows.map((r, i) => `
+        <div class="prow" data-i="${i}">
+          <span class="per">${esc(r)}</span>
+          <input type="text" lang="${LANG.code}" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
+                 enterkeyhint="next" value="${pre.includes(i) ? esc(forms[i]) : ""}"${pre.includes(i) ? " readonly" : ""} />
+          <span class="mark">${pre.includes(i) ? "·" : ""}</span>
+        </div>`).join("")}</div>
+      <div class="keys" id="tbl-keys">${LANG.keys.map((c) => `<button type="button" data-c="${c}">${c}</button>`).join("")}</div>
+      ${pre.length ? `<div class="small muted">Första gången med ${esc(name)}: eu och noi ligger ifyllda som stöd.</div>` : ""}
+      <div id="tbl-res"></div>
+      <button class="cta" id="tbl-check">Kolla raden</button>
+      <div class="acts hidden" id="tbl-acts">
+        <button class="cta" id="tbl-next">Nästa verb</button>
+        <button class="cta sec" id="tbl-done">Klart</button>
+      </div>
+    </div>
+    <div class="note">${esc(p.paradigm.note || "")} Tabellen räknas som <b>en</b> övning i statistiken, men varje form får sin egen plats i repetitionen.${due ? ` Du har ${due} verb att repetera här.` : ""}</div>`;
+
+  const inputs = $$("#tbl-para input");
+  inputs.forEach((inp, i) => {
+    inp.addEventListener("focus", () => typingOn(inp));
+    inp.addEventListener("blur", typingOff);
+    inp.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const next = inputs.slice(i + 1).find((x) => !x.readOnly);
+      if (next) { next.focus(); next.select(); } else checkTable();
+    });
+  });
+  $$("#tbl-keys button").forEach((b) => b.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const act = document.activeElement;
+    const inp = act && act.tagName === "INPUT" && !act.readOnly ? act : inputs.find((x) => !x.readOnly);
+    if (!inp) return;
+    const s = inp.selectionStart ?? inp.value.length;
+    inp.value = inp.value.slice(0, s) + b.dataset.c + inp.value.slice(inp.selectionEnd ?? s);
+    inp.focus(); inp.setSelectionRange(s + 1, s + 1);
+  }));
+  $("#tbl-check").addEventListener("click", checkTable);
+  $("#tbl-next").addEventListener("click", () => openTable(pid));
+  $("#tbl-done").addEventListener("click", () => openPattern(pid));
+  show("s-table");
+  const firstEmpty = inputs.find((x) => !x.readOnly);
+  if (firstEmpty) setTimeout(() => firstEmpty.focus(), 80);
+}
+
+function checkTable() {
+  if (!TBL || TBL.checked) return;
+  TBL.checked = true;
+  const { p, lem, forms, pre } = TBL;
+  const key = p.key(lem), name = lem.inf || key;
+  let right = 0, answered = 0, dia = 0;
+  $$("#tbl-para .prow").forEach((row) => {
+    const i = +row.dataset.i, inp = row.querySelector("input");
+    if (pre.includes(i)) { row.classList.add("pre"); return; }
+    answered++;
+    inp.readOnly = true;
+    const v = norm(inp.value), a = norm(forms[i]);
+    const ok = v === a;
+    const onlyDia = !ok && !!v && stripDia(v) === stripDia(a);
+    if (ok) right++; else if (onlyDia) dia++;
+    row.classList.add(ok ? "ok" : onlyDia ? "dia" : "bad");
+    row.querySelector(".mark").textContent = ok ? "✓" : onlyDia ? "~" : "✗";
+    if (!ok) row.insertAdjacentHTML("beforeend",
+      `<div class="fix">${onlyDia ? "Bara krumelurerna" : "Rätt"}: <b>${esc(forms[i])}</b></div>`);
+    bumpItem(p.id, tblKey(key, i), ok, false);
+  });
+  const all = right === answered;
+  // EN rad i dagsstatistiken och ett avtryck i mönstrets nivå – rätt bara när hela raden satt
+  const s = P.pat[p.id];
+  s.seen++; if (all) s.right++; pushHist(s, all); s.last = today(); touchDay(s);
+  logDay(all, false); save();
+
+  const cls = all ? "good" : right + dia >= answered - 1 ? "mid" : "bad";
+  const extra = dia ? ` · ${dia} med bara krumelurfel` : "";
+  const q = `Böj verbet "${name}" på rumänska: hela raden eu, tu, el/ea, noi, voi, ei/ele. Förklara gruppens ändelser, var stammen växlar, och ge två verb till som böjs likadant.`;
+  $("#tbl-res").innerHTML = `<div class="tres ${cls}">${right} av ${answered} rätt${extra}</div>
+    <div class="links center">${aiBtn(q, "tbl-ai")}<button class="linkish" id="tbl-say">Läs hela raden</button></div>`;
+  $("#tbl-check").classList.add("hidden");
+  $("#tbl-acts").classList.remove("hidden");
+  $("#tbl-say").addEventListener("click", () => speak(forms.join(", ")));
+  bindAi($("#tbl-res"));
+  if (all) speak(forms.join(", "));
+}
+
 /* ---- Bedömning + feedback i två steg ---- */
 function grade(ok, { final, silent, timeout } = {}) {
   const c = S.cur; c.attempts++;
@@ -628,9 +757,10 @@ function openModal(html) {
 }
 function closeModal() { $("#modal-root").classList.add("hidden"); $("#modal").innerHTML = ""; document.body.classList.remove("modal-open"); }
 $("#modal-back").addEventListener("click", closeModal);
+$("#tbl-back").addEventListener("click", () => { if (TBL) openPattern(TBL.p.id); else show("s-home"); });
 
 function openSettings() {
-  const totalItems = Object.keys(P.items).length;
+  const totalItems = Object.keys(P.items).filter((k) => !k.includes("#")).length;
   openModal(`<div class="mh"><h2>Inställningar <span class="muted small" style="font-weight:600">· Gnugga ${APP_VERSION}</span></h2><button class="ib" id="m-close" aria-label="Stäng">${ICON_X}</button></div>
     <div class="set">
       <div class="set-row"><span class="set-body"><span class="set-t">Övningar per pass</span><span class="set-d">Ungefär 15 sekunder per övning</span></span>
@@ -691,10 +821,11 @@ function renderHelp() {
   $("#help-body").innerHTML = `<div class="help">
       <details open><summary>Vad Gnugga är</summary><div class="more"><p>Ett komplement till Flippa. Flippa nöter <i>ord</i>; Gnugga nöter <i>formerna</i>: bestämd form, plural, verbböjning, adjektiv som ska stämma. ${LANG.intro}</p></div></details>
       <details><summary>Ett pass</summary><div class="more"><p>Tryck <b>Gnugga nu</b>. Passet börjar med repetition, introducerar ibland ett nytt mönster (kort regel, sedan övningar på bara det), och avslutar med allt blandat.</p><p><b>Böj</b>: skriv formen. Knapparna ă â î ș ț finns under fältet. <b>Välj</b>: bara i början av ett nytt mönster. <b>Säg det</b>: säg formen högt, visa, bedöm dig själv. <b>Rätt eller fel?</b>: fyra sekunder – mäter om det sitter automatiskt.</p><p>Regeln finns alltid under knappen <b>Regeln</b> uppe till höger.</p></div></details>
+      <details><summary>Böj hela verbet</summary><div class="more"><p>På verbmönstrens skärm finns <b>Böj hela verbet</b>. Där skriver du hela raden på en gång – eu, tu, el/ea, noi, voi, ei/ele – och kollar alla sex i ett svep. Att se ändelserna som en kolumn gör mönstret synligt på ett sätt som lösryckta former inte gör.</p><p>Första gången ett verb dyker upp ligger <b>eu</b> och <b>noi</b> ifyllda som stöd. Nästa gång är alla sex tomma.</p><p><b>Räkningen:</b> tabellen är <b>en</b> övning i dagsstatistiken men <b>sex kort</b> i repetitionen, ett per person. Den räknas som rätt bara om hela raden satt. Rätt på tid mäts inte här, eftersom sex former tar tid även när man kan dem.</p></div></details>
       <details><summary>Fel svar</summary><div class="more"><p>Först får du en <b>ledtråd</b> utan facit och ett nytt försök. Går det inte får du facit och <b>varför</b>. Forskningen är tydlig: bara rött/grönt lär nästan ingenting, en förklaring lär mycket, och att rätta sig själv lär mest.</p><p>Knappen <b>AI-förklaring</b> öppnar Googles AI-läge med en färdig fråga om just den formen. Efter ett fel tar frågan med vad du svarade, så du får veta varför just ditt svar blev fel.</p></div></details>
       <details><summary>Varför det blandas</summary><div class="more"><p>När du kan grunden i flera mönster blandar appen dem. Det känns svårare än att köra ett i taget – och de flesta tror att blockat är bättre. Men mätt en vecka senare lär man sig mer av blandat, för då måste man <i>välja</i> regel, inte bara följa den.</p></div></details>
       <details><summary>Nivåerna</summary><div class="more"><p><b>Nytt</b> → <b>Övat</b> (du har tränat på det) → <b>Lärt</b> (det sitter: minst 15 övningar, 70 % rätt) → <b>Automatiskt</b> (40 övningar, 85 % rätt, 15 rätt på tid och minst tre olika dagar). Automatiskt är målet: att formen kommer utan att du tänker.</p><p>Procent rätt räknas alltid på dina senaste 20 svar i mönstret, inte på hela historiken. Ett mönster du kämpade med i början men kan nu ska se ut så.</p><p>Varje ord du gnuggat i ett mönster har dessutom en egen låda, som i Flippa. Hur de lådorna styr vad du får se står under <b>Exakt hur funkar det?</b></p></div></details>
-      <details><summary>Exakt hur funkar det?</summary><div class="more"><p><b>Varje ord har en egen låda per mönster.</b> Ordet <i>casă</i> i plural och <i>casă</i> i bestämd form är två skilda kort. Rätt svar flyttar kortet upp ett steg, rätt <i>och</i> snabbt flyttar två, fel nollställer. Lådan bestämmer när kortet kommer tillbaka: idag, efter 1, 2, 4, 8, 16 eller 32 dagar.</p><p><b>Förfallna är en pool, inte en kö.</b> Siffran på startsidan är alla kort vars dag har passerat. Den växer så fort du rör nya ord, och den ska inte betas av. Ett pass drar bara en handfull ur poolen, och ingenting straffas för att ha legat länge.</p><p><b>Vilket ord du får</b> avgörs på nytt vid varje övning. Oftast blir det ett förfallet ord, viktat så att de svagaste lådorna kommer tillbaka mest. Annars ett ord du aldrig sett, hämtat ur ett fönster av de vanligaste orden. Fönstret börjar på tjugo ord och växer i takt med hur många du mött, så vanliga ord kommer först.</p><p><b>Passet</b> inleds med uppvärmning viktad mot dina svagaste mönster. Ska ett nytt mönster in tar det regeln plus sex övningar. Resten blandas, med regeln att samma mönster aldrig kommer tre gånger i rad. Var femte övning blir <b>Säg det</b> och ungefär var sjätte blir <b>Rätt eller fel?</b>, men bara i mönster som nått Lärt.</p><p><b>Nästa mönster</b> följer en fast ordning: substantivens tre former, sedan verben, adjektiven, genitiv-dativ, pronomenen och räkneorden. Innan ett nytt öppnas ska tre saker stämma. Mönstrets egna förkunskaper ska vara <b>Lärt</b> – perfekt kräver till exempel både presens och de oregelbundna verben. Allt du redan har igång ska vara Lärt. Och det kommer högst ett nytt mönster per dag.</p><p><b>Pausa ett mönster</b> längst ned på dess egen skärm om det tar för mycket plats just nu. Det ligger kvar med sina framsteg, men kommer inte i blandade pass, räknas inte som förfallet och bromsar inte nästa mönster. Du kan fortfarande gnugga det därifrån när du vill, och återuppta det lika enkelt.</p></div></details>
+      <details><summary>Exakt hur funkar det?</summary><div class="more"><p><b>Varje ord har en egen låda per mönster.</b> Ordet <i>casă</i> i plural och <i>casă</i> i bestämd form är två skilda kort. Rätt svar flyttar kortet upp ett steg, rätt <i>och</i> snabbt flyttar två, fel nollställer. Lådan bestämmer när kortet kommer tillbaka: idag, efter 1, 2, 4, 8, 16 eller 32 dagar.</p><p><b>Förfallna är en pool, inte en kö.</b> Siffran på startsidan är alla kort vars dag har passerat. Den växer så fort du rör nya ord, och den ska inte betas av. Ett pass drar bara en handfull ur poolen, och ingenting straffas för att ha legat länge.</p><p><b>Vilket ord du får</b> avgörs på nytt vid varje övning. Oftast blir det ett förfallet ord, viktat så att de svagaste lådorna kommer tillbaka mest. Annars ett ord du aldrig sett, hämtat ur ett fönster av de vanligaste orden. Fönstret börjar på tjugo ord och växer i takt med hur många du mött, så vanliga ord kommer först.</p><p><b>Passet</b> inleds med uppvärmning viktad mot dina svagaste mönster. Ska ett nytt mönster in tar det regeln plus sex övningar. Resten blandas, med regeln att samma mönster aldrig kommer tre gånger i rad. Var femte övning blir <b>Säg det</b> och ungefär var sjätte blir <b>Rätt eller fel?</b>, men bara i mönster som nått Lärt.</p><p><b>Nästa mönster</b> följer en fast ordning: substantivens tre former, sedan verben, adjektiven, genitiv-dativ, pronomenen och räkneorden. Innan ett nytt öppnas ska tre saker stämma. Mönstrets egna förkunskaper ska vara <b>Lärt</b> – perfekt kräver till exempel både presens och de oregelbundna verben. Allt du redan har igång ska vara Lärt. Och det kommer högst ett nytt mönster per dag.</p><p><b>Böj hela verbet</b> har en egen hög kort, ett per person och verb. De ligger utanför siffran för förfallna på startsidan, eftersom blandade pass aldrig drar ur den högen. I stället står antalet verb att repetera på knappen inne i verbmönstret.</p><p><b>Pausa ett mönster</b> längst ned på dess egen skärm om det tar för mycket plats just nu. Det ligger kvar med sina framsteg, men kommer inte i blandade pass, räknas inte som förfallet och bromsar inte nästa mönster. Du kan fortfarande gnugga det därifrån när du vill, och återuppta det lika enkelt.</p></div></details>
       <details><summary>Läsa eller göra?</summary><div class="more"><p>Båda, men mest göra. Regeln är max en skärm och läses en gång. Sedan är det övningarna som bygger färdigheten – ungefär 10 % läsa, 90 % göra. Fördjupningen under varje mönster är för när du blir nyfiken, inte ett krav.</p></div></details>
       <details><summary>Framsteg och enheter</summary><div class="more"><p>Allt sparas lokalt i webbläsaren på den här enheten. Appen på hemskärmen, Safari och en app som öppnar länken har var sitt utrymme, så framstegen följer inte automatiskt med mellan dem.</p><p>Under kugghjulet kan du <b>exportera</b> framstegen som en fil och <b>importera</b> dem på en annan enhet.</p></div></details>
       <details><summary>Statistiken</summary><div class="more"><p><b>Rätt på tid</b> är Gnuggas eget mått: andelen svar som var både rätt och snabba (under sju sekunder på första försöket, eller rätt i "Rätt eller fel?"). Det är måttet på att en form börjar sitta automatiskt.</p><p><b>Vad du gör fel</b> bygger på feldiagnosen: är det bara krumelurerna, fel ändelse, fel stam eller en riktig form fast fel form? Är det mest krumelurer är det tangentbordet, inte grammatiken.</p></div></details>
@@ -754,7 +885,7 @@ function renderStats() {
   const acc = pct100(cur.right, cur.n), accPrev = pct100(prev.right, prev.n), fast = pct100(cur.fast, cur.n), fastPrev = pct100(prev.fast, prev.n);
   const delta = (v, p) => statsPeriod === "all" || !prev.n ? "" : `<span class="delta ${v - p < 0 ? "neg" : ""}">${v - p >= 0 ? "+" : ""}${v - p}</span>`;
   // E
-  const weak = Object.entries(P.items).map(([k, v]) => ({ pid: k.split("|")[0], key: k.split("|")[1], ...v })).filter((i) => i.box <= 1 && i.seen >= 1)
+  const weak = Object.entries(P.items).map(([k, v]) => ({ pid: k.split("|")[0], key: k.split("|")[1], ...v })).filter((i) => i.box <= 1 && i.seen >= 1 && !i.key.includes("#"))
     .sort((x, y) => (x.box - y.box) || ((y.seen - y.right) - (x.seen - x.right)) || (y.seen - x.seen)).slice(0, 10).filter((i) => byId[i.pid]);
   // F
   const errs = {}; let errTot = 0;

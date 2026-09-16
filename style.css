@@ -169,6 +169,28 @@ body.typing .task .q { font-size: .92rem; }
 .keys { display: flex; gap: 8px; justify-content: center; }
 .keys button { min-width: 46px; height: 44px; border-radius: 11px; background: var(--surface-2); font-size: 1.25rem; font-weight: 600; }
 .keys button:active { background: var(--line); }
+/* Böj hela verbet: paradigmtabellen */
+.vhead { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.vhead .inf { font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em; }
+.vhead .sv { color: var(--warm); font-weight: 700; }
+.para { display: flex; flex-direction: column; gap: 7px; }
+.prow { display: grid; grid-template-columns: 74px 1fr 24px; align-items: center; gap: 9px; }
+.prow .per { font-size: .86rem; color: var(--muted); font-weight: 700; text-align: right; }
+.prow input { width: 100%; background: var(--surface-2); border: 2px solid transparent; border-radius: 11px; padding: 11px 12px; font-size: 1.05rem; font-weight: 700; color: var(--text); outline: none; }
+.prow input:focus { border-color: var(--accent); }
+.prow input:read-only { background: rgba(63,207,168,.12); color: var(--accent); }
+.prow .mark { font-size: 1rem; text-align: center; }
+.prow.ok input { border-color: var(--good); } .prow.ok .mark { color: var(--good); }
+.prow.bad input { border-color: var(--fail); } .prow.bad .mark { color: var(--fail); }
+.prow.dia input { border-color: var(--warm); } .prow.dia .mark { color: var(--warm); }
+.prow .fix { grid-column: 2 / span 2; font-size: .82rem; color: var(--fail); margin-top: -3px; }
+.prow.dia .fix { color: var(--warm); }
+.tres { border-radius: 12px; padding: 10px 12px; font-size: .92rem; font-weight: 700; }
+.tres.good { background: rgba(91,191,114,.16); color: var(--good); }
+.tres.mid { background: rgba(242,184,75,.16); color: var(--warm); }
+.tres.bad { background: rgba(224,96,79,.16); color: var(--fail); }
+.acts { display: flex; gap: 8px; } .acts .cta { flex: 1; }
+
 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .opt { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 16px 10px; font-size: 1.15rem; font-weight: 700; overflow-wrap: anywhere; }
 .opt:active { background: var(--surface-2); }

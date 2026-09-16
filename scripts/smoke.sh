@@ -69,6 +69,19 @@ test = '''<script>
       el.remove();
       out.push("skrivläge: på=" + on + " av=" + off); }
 
+    // Böj hela verbet: sex kort i lådorna men EN rad i dagsstatistiken
+    { const p = byId["v-pres"], lem = tablePool(p)[0], forms = p.paradigm.forms(lem);
+      const fill = () => $$("#tbl-para input").forEach((inp, i) => { if (!inp.readOnly) inp.value = forms[i]; });
+      openTable("v-pres", lem); const pre = $$("#tbl-para input[readonly]").length;
+      fill(); checkTable();
+      const d0 = (P.days[today()] || { n: 0 }).n, seen0 = P.pat["v-pres"].seen, due0 = dueCount();
+      openTable("v-pres", lem); fill(); checkTable();
+      const keys = Object.keys(P.items).filter((k) => k.startsWith("v-pres|" + p.key(lem) + "#"));
+      const d1 = (P.days[today()] || { n: 0 }).n, seen1 = P.pat["v-pres"].seen, due1 = dueCount();
+      out.push("tabell: stödhjul=" + pre + " kort=" + keys.length + " dagrader=+" + (d1 - d0) + " mönster-seen=+" + (seen1 - seen0) + " förfallna oförändrat=" + (due1 === due0));
+      out.push("tabell: " + ($("#tbl-res .tres") ? $("#tbl-res .tres").textContent : "inget resultat") + " · lådor=" + keys.map((k) => P.items[k].box).join(","));
+      const fel = $$("#tbl-para .prow.bad").length; out.push("tabell: felrader vid rätt svar=" + fel); }
+
     // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
     { const backup = JSON.stringify(P); const y = addDays(today(), -1);
       const pat = (seen) => ({ seen, right: seen, fast: 0, intro: y, last: y, dayList: [y], hist: Array(Math.min(20, seen)).fill(1) });

@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "16 september 2026", ver: "v32", items: [
+    { t: "Nytt läge: Böj hela verbet. Skriv hela raden eu, tu, el/ea, noi, voi, ei/ele på en gång och kolla alla sex i ett svep. Finns på presens, oregelbundna och perfekt.", type: "new", hi: true, ico: "📋", desc: "Första gången med ett verb ligger eu och noi ifyllda som stöd. Tabellen räknas som en övning i statistiken men sex kort i repetitionen, ett per person." },
+  ] },
   { date: "16 september 2026", ver: "v31", items: [
     { t: "Tangentbordet täcker inte längre skrivfältet och Kolla-knappen. När du skriver flyttas övningen upp, och appen krymper efter tangentbordet där iOS rapporterar höjden.", type: "fixed" },
   ] },

@@ -131,6 +131,16 @@ const RO = (() => {
      och "flera timme" blir fel. Visa grundformen + en etikett för formen som efterfrågas. */
   const svPers = (pi, v) => vPres(pi, v);
 
+  /* Paradigm = hela raden i ett svep ("Böj hela verbet"). Motorn läser bara
+     rows (etiketter), forms(lemma) och ok(lemma); resten är språkets sak. */
+  const paraDef = (forms, note) => ({
+    rows: PERS.map((p) => p.ro),
+    hints: PERS.map((p) => p.sv),
+    forms,
+    note,
+    ok: (v) => { const f = forms(v); return f.length === 6 && f.every((x) => x && x !== "-" && !x.includes("-")); },
+  });
+
   /* ---- mönster ---- */
   const PATTERNS = [
     { id: "n-def", area: "Substantiv", name: "Bestämd form singular", short: "Bestämd form", order: 1,
@@ -192,6 +202,7 @@ const RO = (() => {
       } },
 
     { id: "v-pres", area: "Verb", name: "Presens – de regelbundna grupperna", short: "Presens", order: 4,
+      paradigm: paraDef((v) => v.pres, "Ändelserna hör ihop gruppvis. Skriv hela raden så ser du systemet."),
       rule: `Infinitivens slut avgör gruppen, gruppen avgör ändelserna. De fyra vanligaste:<br><br>
         ${ro("-a")} (a cânta): cânt · cânți · cântă · cântăm · cântați · cântă<br>
         ${ro("-a med -ez")} (a lucra): lucrez · lucrezi · lucrează · lucrăm · lucrați · lucrează<br>
@@ -215,6 +226,7 @@ const RO = (() => {
       } },
 
     { id: "v-irr", area: "Verb", name: "Oregelbundna kärnverb", short: "Oregelbundna", order: 5, needs: ["v-pres"],
+      paradigm: paraDef((v) => v.pres, "De här har ingen gemensam regel – hela raden lärs som en enhet."),
       rule: `Verb du behöver hela tiden och som inte följer mönstren. Lär dem som helheter:<br><br>
         ${ro("a fi")} (vara): sunt · ești · este · suntem · sunteți · sunt<br>
         ${ro("a avea")} (ha): am · ai · are · avem · aveți · au<br>
@@ -238,6 +250,7 @@ const RO = (() => {
       } },
 
     { id: "v-perf", area: "Verb", name: "Perfekt – am făcut", short: "Perfekt", order: 6, needs: ["v-pres", "v-irr"],
+      paradigm: paraDef((v) => AUX.map((a) => `${a} ${v.part}`), "Participet är samma hela raden. Det enda som byts är hjälpverbet."),
       rule: `Rumänskans vanligaste förflutna tid byggs som svenskans perfekt: <span class="sv">hjälpverb + particip</span>. Hjälpverbet är en kortform av <i>a avea</i>:<br><br>
         ${ro("am · ai · a · am · ați · au")} + particip<br><br>
         am lucrat (jag har arbetat / jag arbetade) · ai mers · a văzut · am fost · ați vorbit · au făcut<br><br>

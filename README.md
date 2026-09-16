@@ -41,6 +41,7 @@ ledtrådarna kan säga "flera timmar" och "jag gör" i stället för att appen b
 | Böj | skriv formen (knappar för ă â î ș ț) | huvudformat |
 | Säg det | säg högt, visa, bedöm dig själv | var femte övning |
 | Rätt eller fel? | fyra sekunder, mäter automatisering | när mönstret är Lärt |
+| Böj hela verbet | hela paradigmet (sex former) i en tabell | eget läge på verbmönstren, du startar det själv |
 
 ## Arkitektur
 
