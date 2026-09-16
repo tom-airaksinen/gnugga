@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v30";
+const APP_VERSION = "v31";
 // Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
 // glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
 if (window.self !== window.top) document.documentElement.classList.add("embedded");
@@ -349,6 +349,27 @@ function renderValj(p, ex) {
     grade(ok, { final: true });
   }));
 }
+/* iOS-tangentbordet täcker nedre halvan av skärmen utan att krympa layouten, så
+   skrivfältet och Kolla-knappen hamnar under det. Två grepp, båda behövs:
+   1) visualViewport mäter tangentbordets höjd – fungerar i den fristående appen.
+   2) skrivläge som lägger innehållet högst upp – fungerar även i Flippas iframe,
+      där iOS bara rapporterar insetet till den yttersta ramen. */
+const vvp = window.visualViewport;
+function syncKb() {
+  if (!vvp) return;
+  const kb = Math.round(window.innerHeight - vvp.height - vvp.offsetTop);
+  document.documentElement.style.setProperty("--kb", (kb > 80 ? kb : 0) + "px");
+}
+if (vvp) { vvp.addEventListener("resize", syncKb); vvp.addEventListener("scroll", syncKb); }
+function typingOn(el) {
+  document.body.classList.add("typing"); syncKb();
+  setTimeout(() => { syncKb(); try { el.scrollIntoView({ block: "center" }); } catch (_) {} }, 150);
+}
+function typingOff() {
+  document.body.classList.remove("typing");
+  document.documentElement.style.setProperty("--kb", "0px");
+}
+
 function renderBoj(p, ex) {
   const st = $("#stage"); st.className = "stage";
   st.innerHTML = taskHtml(ex) + `<div class="answer"><input class="inp" id="inp" type="text" lang="${LANG.code}" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="skriv formen" />
@@ -368,6 +389,8 @@ function renderBoj(p, ex) {
   };
   $("#check").addEventListener("click", check);
   inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); check(); } });
+  inp.addEventListener("focus", () => typingOn(inp));
+  inp.addEventListener("blur", typingOff);
   setTimeout(() => inp.focus(), 60);
 }
 function renderSag(p, ex) {

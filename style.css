@@ -33,7 +33,9 @@ body {
 }
 /* Appen är exakt en skärm hög och innehållet scrollar inuti (som Flippa). Det ger
    iOS gummibandseffekt när man når slutet, och rubriken ligger still medan man scrollar. */
-#app { width: 100%; max-width: 480px; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+/* --kb = tangentbordets höjd när iOS rapporterar den; appen krymper så att
+   skrivfält och knapp aldrig hamnar bakom tangentbordet. */
+#app { width: 100%; max-width: 480px; height: calc(100% - var(--kb, 0px)); display: flex; flex-direction: column; position: relative; overflow: hidden; }
 .screen { display: none; flex: 1; min-height: 0; flex-direction: column; animation: fadein .18s ease; }
 .screen.on { display: flex; }
 @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -146,6 +148,11 @@ details .more { margin-top: 10px; font-size: .95rem; display: flex; flex-directi
 .tag.type.say { background: rgba(242,184,75,.18); color: var(--warm); }
 .tag.rulebtn { margin-left: auto; background: none; border: 1px solid var(--line); }
 .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 16px 20px 20px; }
+/* Skrivläge: innehållet uppåt och lite tightare, så fältet och Kolla syns ovanför tangentbordet */
+body.typing .stage { justify-content: flex-start; gap: 14px; padding-top: 4px; }
+body.typing .task { gap: 5px; }
+body.typing .task .big { font-size: 1.7rem; }
+body.typing .task .q { font-size: .92rem; }
 .task { text-align: center; display: flex; flex-direction: column; gap: 8px; }
 .task .q { font-size: 1rem; color: var(--muted); }
 .task .big { font-size: 2.1rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; text-wrap: balance; overflow-wrap: anywhere; }

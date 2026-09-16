@@ -62,6 +62,13 @@ test = '''<script>
       const qc = aiQuestion(ex, wrongPhrase({ type: "boj", lastInput: ex.answer, ex }));
       out.push("ai utan felsvar: " + (qc.includes("Jag svarade") ? "FEL – citerar rätt svar" : "OK")); }
 
+    // skrivläge: klassen som lyfter fältet ovanför tangentbordet
+    { const el = document.createElement("div"); document.body.appendChild(el);
+      typingOn(el); const on = document.body.classList.contains("typing");
+      typingOff(); const off = !document.body.classList.contains("typing");
+      el.remove();
+      out.push("skrivläge: på=" + on + " av=" + off); }
+
     // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
     { const backup = JSON.stringify(P); const y = addDays(today(), -1);
       const pat = (seen) => ({ seen, right: seen, fast: 0, intro: y, last: y, dayList: [y], hist: Array(Math.min(20, seen)).fill(1) });
