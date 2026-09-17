@@ -65,7 +65,7 @@ test = '''<script>
     // skrivläge: klassen som lyfter fältet ovanför tangentbordet
     { const el = document.createElement("div"); document.body.appendChild(el);
       typingOn(el); const on = document.body.classList.contains("typing");
-      typingOff(); const off = !document.body.classList.contains("typing");
+      typingOff(); await wait(250); const off = !document.body.classList.contains("typing");
       el.remove();
       out.push("skrivläge: på=" + on + " av=" + off); }
 
@@ -80,7 +80,24 @@ test = '''<script>
       const d1 = (P.days[today()] || { n: 0 }).n, seen1 = P.pat["v-pres"].seen, due1 = dueCount();
       out.push("tabell: stödhjul=" + pre + " kort=" + keys.length + " dagrader=+" + (d1 - d0) + " mönster-seen=+" + (seen1 - seen0) + " förfallna oförändrat=" + (due1 === due0));
       out.push("tabell: " + ($("#tbl-res .tres") ? $("#tbl-res .tres").textContent : "inget resultat") + " · lådor=" + keys.map((k) => P.items[k].box).join(","));
-      const fel = $$("#tbl-para .prow.bad").length; out.push("tabell: felrader vid rätt svar=" + fel); }
+      const fel = $$("#tbl-para .prow.bad").length; out.push("tabell: felrader vid rätt svar=" + fel);
+      openTable("v-pres", lem);
+      const tin = $$("#tbl-para input").find((x) => !x.readOnly); tin.value = "test";
+      $("#tbl-keys button").dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+      out.push("tabellens krumelurknapp: " + tin.value); }
+
+    // krumelurknapparna: tecknet ska in i fältet utan att fokus tappas
+    { const y = addDays(today(), -1);
+      P.pat["n-def"] = { seen: 20, right: 20, fast: 5, intro: y, last: y, dayList: [y], hist: Array(20).fill(1) };
+      startSession({ focus: "n-def" }); await wait(80);
+      const inp = $("#inp"), key = $(".keys button");
+      if (!inp || !key) out.push("krumelur: ingen boj-övning att testa på");
+      else {
+        inp.focus(); inp.value = "cas";
+        const notPrev = key.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+        out.push("krumelur: fält=" + inp.value + " fokus kvar=" + (document.activeElement === inp) + " default stoppad=" + !notPrev);
+      }
+      S = null; renderHome(); show("s-home"); }
 
     // gruppass: tre verb ur samma mönster + jämförelsen
     { const p = byId["v-pres"], list = groupList(p);

@@ -9,7 +9,7 @@
    - feedback i två steg: ledtråd utan facit → nytt försök → facit + varför
    - SRS: Leitner-lådor per (mönster × lemma), som Flippa; mönsternivå Nytt→Övat→Lärt→Automatiskt (korrekthet = glidande fönster, senaste 20 svaren) */
 
-const APP_VERSION = "v34";
+const APP_VERSION = "v35";
 // Inbäddat läge: Gnugga körs i en iframe inne i Flippa (testvecka B-lite, se
 // glosappen/docs/flippa-x-gnugga.md). Klassen nollar toppens safe-area i CSS.
 if (window.self !== window.top) document.documentElement.classList.add("embedded");
@@ -366,12 +366,19 @@ function syncKb() {
 }
 if (vvp) { vvp.addEventListener("resize", syncKb); vvp.addEventListener("scroll", syncKb); }
 function typingOn(el) {
+  clearTimeout(typingTimer);
+  el.classList.add("typing-field");
   document.body.classList.add("typing"); syncKb();
   setTimeout(() => { syncKb(); try { el.scrollIntoView({ block: "center" }); } catch (_) {} }, 150);
 }
+let typingTimer = null;
 function typingOff() {
-  document.body.classList.remove("typing");
-  document.documentElement.style.setProperty("--kb", "0px");
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    if (document.querySelector(".typing-field:focus")) return;   // fokus kom tillbaka
+    document.body.classList.remove("typing");
+    document.documentElement.style.setProperty("--kb", "0px");
+  }, 150);
 }
 
 function renderBoj(p, ex) {
@@ -380,7 +387,12 @@ function renderBoj(p, ex) {
     <div class="keys">${LANG.keys.map((c) => `<button type="button" data-c="${c}">${c}</button>`).join("")}</div>
     <button class="cta" id="check">Kolla</button></div>`;
   const inp = $("#inp");
-  $$(".keys button").forEach((b) => b.addEventListener("click", () => { const s = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, s) + b.dataset.c + inp.value.slice(s); inp.focus(); inp.setSelectionRange(s + 1, s + 1); }));
+  $$(".keys button", st).forEach((b) => b.addEventListener("mousedown", (e) => {   // bara passets knappar, inte tabellens
+    e.preventDefault();                       // behåll fokus i fältet – annars stängs skrivläget och trycket går förlorat
+    const s = inp.selectionStart ?? inp.value.length;
+    inp.value = inp.value.slice(0, s) + b.dataset.c + inp.value.slice(inp.selectionEnd ?? s);
+    inp.focus(); inp.setSelectionRange(s + 1, s + 1);
+  }));
   const check = () => {
     const v = norm(inp.value); if (!v) { inp.focus(); return; }
     const accepted = [ex.answer, ...(ex.alts || []), ...(ex.acceptFull && ex.full ? [ex.full] : [])].map(norm);
@@ -926,7 +938,7 @@ function openChangelog() {
 $("#version-tag").addEventListener("click", () => { renderHelp(); show("s-help"); });
 
 /* ============================================================
-   Statistik (flik): A vecka & heatmap · B period & KPI · E svagaste orden · F feltyper
+   Statistik (flik): A sju dagar & heatmap · B period & KPI · E svagaste orden · F feltyper
    ============================================================ */
 let statsPeriod = "month";
 const DIA_LABEL = { dia: ["Bara krumelurerna (ă â î ș ț)", "var(--warm)"], ending: ["Fel ändelse eller annat", "var(--fail)"], stem: ["Rätt ändelse, fel stam", "#9b6dff"], form: ["Riktig form, men fel form", "#5b8cff"] };
@@ -967,13 +979,13 @@ function renderStats() {
   const errOrder = Object.keys(DIA_LABEL).sort((x, y) => (errs[y] || 0) - (errs[x] || 0));
 
   $("#stats-body").innerHTML = `
-    <div class="st-hero"><div class="big">${n7}<span> av 7 dagar</span></div><div class="cap">den här veckan · ${totalDays} gnuggdag${totalDays === 1 ? "" : "ar"} totalt${totalDays > 1 ? ` · längsta svit ${longestStreak()}` : ""}</div></div>
+    <div class="st-hero"><div class="big">${n7}<span> av de senaste 7 dagarna</span></div><div class="cap">${totalDays} gnuggdag${totalDays === 1 ? "" : "ar"} totalt${totalDays > 1 ? ` · längsta svit ${longestStreak()}` : ""}</div></div>
     <div class="week"><div class="dots">${week.map((d) => `<span class="dot ${P.days[d] ? "on" : ""} ${d === t ? "now" : ""}">${names[new Date(d + "T12:00:00").getDay()]}</span>`).join("")}</div></div>
     <div class="eyebrow">Senaste 18 veckorna</div>
     <div class="heat">${heat}</div>
     <div class="legend">mindre <span class="d"></span><span class="d l1"></span><span class="d l2"></span><span class="d l3"></span><span class="d l4"></span> mer</div>
 
-    <div class="seg wide" id="st-period">${[["week", "Vecka"], ["month", "Månad"], ["all", "Allt"]].map(([v, l]) => `<button data-v="${v}" class="${statsPeriod === v ? "on" : ""}">${l}</button>`).join("")}</div>
+    <div class="seg wide" id="st-period">${[["week", "7 dagar"], ["month", "30 dagar"], ["all", "Allt"]].map(([v, l]) => `<button data-v="${v}" class="${statsPeriod === v ? "on" : ""}">${l}</button>`).join("")}</div>
     <div class="kpis">
       <div class="kpi"><b>${cur.pass}</b><span>pass</span></div>
       <div class="kpi"><b>${cur.n}</b><span>övningar</span></div>

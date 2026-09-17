@@ -51,7 +51,7 @@ ledtrådarna kan säga "flera timmar" och "jag gör" i stället för att appen b
 | App-kod | `index.html`, `style.css`, `app.js` (språkoberoende motor), `sw.js`, `manifest.json` |
 | Språk | `data/ro/monster.js` (regler, exempel, generatorer, ledtrådar) + `data/ro/lexikon.json` (böjningsformer) |
 | Progress | localStorage per enhet: Leitner-låda per (mönster × ord), nivå per mönster, dagar. Export/import som JSON i Inställningar |
-| Flikar | Gnugga (hem + pass) · Statistik (vecka & heatmap, KPI per period, svagaste orden, feltyper) · Hjälp (grundtankar, Vad är nytt, källor) |
+| Flikar | Gnugga (hem + pass) · Statistik (senaste sju dagarna & heatmap, KPI per period, svagaste orden, feltyper) · Hjälp (grundtankar, Vad är nytt, källor) |
 | Changelog | `data/changelog.js`, visas under Hjälp → Vad är nytt |
 
 Ingen backend, ingen inloggning, ingen Firebase: innehållet är kurerat och versionshanterat här.

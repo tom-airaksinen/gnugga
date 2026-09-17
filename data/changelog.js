@@ -9,6 +9,10 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "17 september 2026", ver: "v35", items: [
+    { t: "Knapparna för ă â î ș ț fungerar igen. De tappade tecknet när skrivläget stängdes mitt i trycket.", type: "fixed" },
+    { t: "Statistiken säger nu \"av de senaste 7 dagarna\" i stället för \"den här veckan\", eftersom det är ett rullande fönster. Perioderna heter 7 dagar och 30 dagar av samma skäl.", type: "improved" },
+  ] },
   { date: "16 september 2026", ver: "v34", items: [
     { t: "Nytt: gruppass. Tre verb ur samma mönster i rad, och sist står de tre böjningarna bredvid varandra med ändelserna markerade.", type: "new", hi: true, ico: "🧩", desc: "Välj mellan ändelsegrupperna, stamväxlingen o → oa som går tvärs över grupperna, eller de oregelbundna kärnverben. I perfekt grupperas verben efter participets ändelse." },
   ] },
