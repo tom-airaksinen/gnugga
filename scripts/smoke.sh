@@ -78,7 +78,7 @@ test = '''<script>
       openTable("v-pres", lem); fill(); checkTable();
       const keys = Object.keys(P.items).filter((k) => k.startsWith("v-pres|" + p.key(lem) + "#"));
       const d1 = (P.days[today()] || { n: 0 }).n, seen1 = P.pat["v-pres"].seen, due1 = dueCount();
-      out.push("tabell: stödhjul=" + pre + " kort=" + keys.length + " dagrader=+" + (d1 - d0) + " mönster-seen=+" + (seen1 - seen0) + " förfallna oförändrat=" + (due1 === due0));
+      out.push("tabell: verb=" + lem.inf + " stödhjul=" + pre + " kort=" + keys.length + " dagrader=+" + (d1 - d0) + " mönster-seen=+" + (seen1 - seen0) + " förfallna oförändrat=" + (due1 === due0));
       out.push("tabell: " + ($("#tbl-res .tres") ? $("#tbl-res .tres").textContent : "inget resultat") + " · lådor=" + keys.map((k) => P.items[k].box).join(","));
       const fel = $$("#tbl-para .prow.bad").length; out.push("tabell: felrader vid rätt svar=" + fel);
       openTable("v-pres", lem);
@@ -118,6 +118,22 @@ test = '''<script>
       out.push("jämförelse: celler=" + $$("#tbl-body .cmp .c").length + " markerade=" + $$("#tbl-body .cmp em").length + " rubrik=" + $("#tbl-title").textContent);
       const gOa = list.find((x) => x.g.id === "oa");
       out.push("oa-gruppen: " + (gOa ? gOa.verbs.slice(0, 3).map((v) => v.inf).join(", ") : "saknas")); }
+
+    // substantivens tabell: delade kort mellan mönstren + gruppass
+    { const p = byId["n-pl"], lem = tablePool(p).find((n) => n.w === "mașină") || tablePool(p)[0];
+      const forms = p.paradigm.forms(lem);
+      openTable("n-pl", lem);
+      out.push("subst-tabell: rader=" + $$("#tbl-para .prow").length + " stödhjul=" + $$("#tbl-para input[readonly]").length +
+               " rubrik=" + $("#tbl-title").textContent + " underrad=" + ($(".vhead .grp") ? $(".vhead .grp").textContent : "–"));
+      $$("#tbl-para input").forEach((inp, i) => { if (!inp.readOnly) inp.value = forms[i]; });
+      const d0 = (P.days[today()] || { n: 0 }).n; checkTable();
+      const keys = Object.keys(P.items).filter((k) => k.startsWith("noun|" + lem.w + "#"));
+      out.push("subst-tabell: kort=" + keys.join(",") + " dagrader=+" + ((P.days[today()] || { n: 0 }).n - d0));
+      openTable("n-def", lem);
+      out.push("delade kort: stödhjul från annat mönster=" + $$("#tbl-para input[readonly]").length + " (0 = korten delas)");
+      const gAlt = groupList(p).find((x) => x.g.id === "alt").g, q = groupPick(p, gAlt);
+      groupSummary("n-pl", { g: gAlt, queue: q, qi: 2 });
+      out.push("subst-gruppass: " + q.map((n) => n.w + "→" + n.f.pl).join(", ") + " · markerade=" + $$("#tbl-body .cmp em").length); }
 
     // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
     { const backup = JSON.stringify(P); const y = addDays(today(), -1);

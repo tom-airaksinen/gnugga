@@ -127,6 +127,47 @@ const RO = (() => {
   const persLabel = (pi) => `${PERS[pi].ro} · ${PERS[pi].sv}`;
   /* Alla riktiga former av lemmat med etikett – motorn använder dem för att säga
      "det är en riktig form, men fel form" i stället för en generell ledtråd. */
+
+  /* ---- Substantivens paradigm: en bil, bilen, bilar, bilarna i ett svep ----
+     Alla substantivmönster delar samma kort (key "noun"); genitiv-dativ lägger
+     bara till två rader på samma nycklar, i samma ordning. */
+  const nStem = (s) => s.replace(/(uri|le|e|i|ă)$/, "");
+  const nDiff = (n) => {                       // index där singular- och pluralstammen skiljer
+    const a = nStem(n.w), b = nStem(n.f.pl), out = [];
+    for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) out.push(i);
+    return out;
+  };
+  const G_NOUN = [
+    { id: "f-e", name: "Feminina med plural på -e", show: "-a · -e · -ele", end: ["a", "e", "ele"],
+      has: (n) => n.g === "f" && n.f.pl.endsWith("e") },
+    { id: "f-i", name: "Feminina med plural på -i", show: "-a · -i · -ile", end: ["a", "i", "ile"],
+      has: (n) => n.g === "f" && n.f.pl.endsWith("i") },
+    { id: "m-i", name: "Maskulina", show: "-ul · -i · -ii", end: ["ul", "i", "ii"],
+      has: (n) => n.g === "m" },
+    { id: "n-e", name: "Neutrum med plural på -e", show: "-ul · -e · -ele", end: ["ul", "e", "ele"],
+      has: (n) => n.g === "n" && n.f.pl.endsWith("e") },
+    { id: "n-uri", name: "Neutrum med plural på -uri", show: "-ul · -uri · -urile", end: ["ul", "uri", "urile"],
+      has: (n) => n.g === "n" && n.f.pl.endsWith("uri") },
+    { id: "alt", name: "Stammen ändras", diff: nDiff,
+      note: "Ändelserna är vanliga – det som är gemensamt är att <b>stammen ändras</b> när ordet blir plural: fată → f<b>e</b>te, masă → m<b>e</b>se, carte → c<b>ă</b>rți. Markeringen visar var.",
+      has: (n) => { const a = nStem(n.w), b = nStem(n.f.pl); return a !== b && a.length === b.length; } },
+  ];
+  const nForms = (gd) => (n) => gd ? [n.f.sgd, n.f.pl, n.f.pld, n.f.gsd, n.f.gpd] : [n.f.sgd, n.f.pl, n.f.pld];
+  const nounPara = (gd) => ({
+    key: "noun",
+    title: "Böj hela ordet",
+    unit: "ord",
+    rows: gd ? ["bestämd", "plural", "bestämd plural", "genitiv-dativ", "gen-dativ plural"]
+             : ["bestämd", "plural", "bestämd plural"],
+    hint: [0],
+    sub: (n) => `${ART[n.g]} ${n.w} · ${GENUS[n.g]}`,
+    ai: (n) => `Alla former av "${n.w}" på rumänska: bestämd form, plural och bestämd plural. Förklara reglerna bakom, var stammen ändras, och ge två ord till som böjs likadant.`,
+    note: "Formerna hänger ihop: genus styr pluralen, och pluralen styr den bestämda pluralen.",
+    forms: nForms(gd),
+    ok: (n) => nForms(gd)(n).every((x) => x && !x.includes(" ")),
+    groups: G_NOUN,
+  });
+
   const nounForms = (n) => { const f = {}; f[n.w] = "grundformen (obestämd singular)"; f[n.f.sgd] = "bestämd singular"; f[n.f.pl] = "obestämd plural"; f[n.f.pld] = "bestämd plural"; if (n.f.gsd) f[n.f.gsd] = "genitiv-dativ singular"; if (n.f.gpd) f[n.f.gpd] = "genitiv-dativ plural"; return f; };
   const verbForms = (v) => { const f = {}; v.pres.forEach((x, i) => { if (!f[x]) f[x] = `presens för ${PERS[i].ro}`; else f[x] += ` och ${PERS[i].ro}`; }); f[v.part] = "participet"; f[v.inf.slice(2)] = "infinitiven"; return f; };
   const adjForms = (a) => { const f = {}; f[a.ms] = "maskulin singular"; if (!f[a.fs]) f[a.fs] = "feminin singular"; if (!f[a.mp]) f[a.mp] = "maskulin plural"; if (!f[a.fp]) f[a.fp] = "feminin plural"; return f; };
@@ -167,6 +208,8 @@ const RO = (() => {
 
   const paraDef = (forms, note) => ({
     rows: PERS.map((p) => p.ro),
+    hint: [0, 3],                      // stödhjul första gången: eu och noi
+    unit: "verb",
     hints: PERS.map((p) => p.sv),
     forms,
     note,
@@ -175,7 +218,7 @@ const RO = (() => {
 
   /* ---- mönster ---- */
   const PATTERNS = [
-    { id: "n-def", area: "Substantiv", name: "Bestämd form singular", short: "Bestämd form", order: 1,
+    { id: "n-def", area: "Substantiv", name: "Bestämd form singular", short: "Bestämd form", order: 1, paradigm: nounPara(false),
       rule: `Rumänskan gör som svenskan: <span class="sv">artikeln hängs på slutet</span> av ordet – hus → hus<b>et</b>, casă → cas<b>a</b>.<br><br>
         ${ro("Feminint:")} -ă → -a (casă → casa) · -e → -ea (carte → cartea) · -ie → -ia (familie → familia) · -a → -ua (cafea → cafeaua)<br>
         ${ro("Maskulint & neutrum:")} konsonant → +ul (băiat → băiatul) · -e → +le (frate → fratele) · -u → +l (muzeu → muzeul)`,
@@ -194,7 +237,7 @@ const RO = (() => {
           why: defRule(n), distractors: pad3(cands, [w + "ei", w + "lui"], n.f.sgd), forms: nounForms(n), target: "bestämd singular", stemHint: STEM_HINT_N };
       } },
 
-    { id: "n-pl", area: "Substantiv", name: "Plural obestämd", short: "Plural", order: 2,
+    { id: "n-pl", area: "Substantiv", name: "Plural obestämd", short: "Plural", order: 2, paradigm: nounPara(false),
       rule: `Pluraländelsen beror på genus:<br><br>
         ${ro("Feminint:")} -ă → -e (casă → case) eller -i (țară → țări)<br>
         ${ro("Maskulint:")} → -i (băiat → băieți, prieten → prieteni)<br>
@@ -214,7 +257,7 @@ const RO = (() => {
           why: plRule(n), distractors: pad3(cands, [w + "ă", st + "uri"], n.f.pl), forms: nounForms(n), target: "obestämd plural", stemHint: STEM_HINT_N };
       } },
 
-    { id: "n-pldef", area: "Substantiv", name: "Bestämd form plural", short: "Bestämd plural", order: 3, needs: ["n-pl"],
+    { id: "n-pldef", area: "Substantiv", name: "Bestämd form plural", short: "Bestämd plural", order: 3, needs: ["n-pl"], paradigm: nounPara(false),
       rule: `Ta pluralen och häng på artikeln:<br><br>
         ${ro("-i → -ii")} (băieți → băieții, oameni → oamenii)<br>
         ${ro("-e → -ele")} (case → casele, orașe → orașele)<br>
@@ -331,7 +374,7 @@ const RO = (() => {
           distractors: pad3(forms, [a.ms + "ă", a.ms + "i", a.ms + "e", a.ms.slice(0, -1) + "ă", a.ms.slice(0, -1) + "i"], ans), forms: adjForms(a), target: `${fem ? "feminin" : "maskulin"} ${num === "sg" ? "singular" : "plural"}`, stemHint: `Ändelsen stämmer men stammen ändras – ${a.ms} har formerna ${forms.join(" · ")}.` };
       } },
 
-    { id: "n-gd", area: "Substantiv", name: "Genitiv-dativ – casei, băiatului", short: "Genitiv-dativ", order: 8, needs: ["n-def", "n-pl"],
+    { id: "n-gd", area: "Substantiv", name: "Genitiv-dativ – casei, băiatului", short: "Genitiv-dativ", order: 8, needs: ["n-def", "n-pl"], paradigm: nounPara(true),
       rule: `Rumänskan har ett kasus för "någons" och "till någon" – <span class="sv">genitiv-dativ</span>. Det syns bara på bestämd form:<br><br>
         ${ro("Maskulint & neutrum:")} bestämd form + -ui: băiatul → băiat<b>ului</b> (pojkens / till pojken), orașul → oraș<b>ului</b><br>
         ${ro("Feminint:")} ser ut som pluralen + -i: casă → case → cas<b>ei</b> (husets / till huset), fată → fete → fet<b>ei</b><br>

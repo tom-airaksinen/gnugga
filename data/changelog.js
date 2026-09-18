@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "18 september 2026", ver: "v36", items: [
+    { t: "Substantiven har fått samma lägen som verben: Böj hela ordet (bestämd form, plural och bestämd plural i ett svep) och gruppass med tre ord ur samma mönster.", type: "new", hi: true, ico: "📐", desc: "Grupperna är feminina på -e, feminina på -i, maskulina, neutrum på -e, neutrum på -uri, och ett eget spår för ord där stammen ändras: fată → fete, carte → cărți. Inne i genitiv-dativ får tabellen två rader till." },
+  ] },
   { date: "17 september 2026", ver: "v35", items: [
     { t: "Knapparna för ă â î ș ț fungerar igen. De tappade tecknet när skrivläget stängdes mitt i trycket.", type: "fixed" },
     { t: "Statistiken säger nu \"av de senaste 7 dagarna\" i stället för \"den här veckan\", eftersom det är ett rullande fönster. Perioderna heter 7 dagar och 30 dagar av samma skäl.", type: "improved" },
