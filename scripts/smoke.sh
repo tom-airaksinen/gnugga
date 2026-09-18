@@ -135,6 +135,17 @@ test = '''<script>
       groupSummary("n-pl", { g: gAlt, queue: q, qi: 2 });
       out.push("subst-gruppass: " + q.map((n) => n.w + "→" + n.f.pl).join(", ") + " · markerade=" + $$("#tbl-body .cmp em").length); }
 
+    // etiketterna ska följa ordklassen, inte alltid säga "verb"
+    { const bad = [];
+      for (const id of ["n-def", "n-pl", "n-pldef", "n-gd"]) {
+        openPattern(id);
+        const t = ($("#p-table") ? $("#p-table").textContent : "") + " | " + ($("#p-group") ? $("#p-group").textContent : "");
+        if (/verb/i.test(t)) bad.push(id + ": " + t);
+      }
+      openPattern("v-pres");
+      const vt = ($("#p-table") ? $("#p-table").textContent : "") + " | " + ($("#p-group") ? $("#p-group").textContent : "");
+      out.push("etiketter: substantiv utan ordet verb=" + (bad.length ? "NEJ – " + bad.join(" / ") : "ja") + " · verbknappar=" + vt.replace(/\s+/g, " ")); }
+
     // grinden för nya mönster: förkunskaper + allt aktivt på Lärt + ett per dag
     { const backup = JSON.stringify(P); const y = addDays(today(), -1);
       const pat = (seen) => ({ seen, right: seen, fast: 0, intro: y, last: y, dayList: [y], hist: Array(Math.min(20, seen)).fill(1) });
