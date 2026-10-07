@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gnugga – prototyp: hur uppgiften visas</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1b1e; --surface:#17282c; --surface-2:#1f353a; --text:#eef4f2; --muted:#93a8a4; --accent:#3fcfa8; --accent-ink:#062b22; --warm:#f2b84b; --good:#5bbf72; --fail:#e0604f; --line:#2b444a; --track:rgba(255,255,255,.10); }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--bg); color:var(--text); font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  body { display:flex; justify-content:center; min-height:100dvh; }
+  #app { width:100%; max-width:480px; min-height:100dvh; display:flex; flex-direction:column; }
+  button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+
+  .hdr { display:flex; align-items:center; gap:10px; padding:calc(14px + env(safe-area-inset-top)) 16px 10px; }
+  .hdr h1 { font-size:1.3rem; font-weight:800; flex:1; display:flex; align-items:center; gap:8px; }
+  .logo { width:30px; height:30px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:900; font-size:16px; flex:none; }
+  .chip { display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:.78rem; font-weight:700; color:var(--muted); }
+  .pad { padding:4px 16px calc(28px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:16px; }
+  .eyebrow { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .muted { color:var(--muted); } .small { font-size:.85rem; } .tiny { font-size:.78rem; }
+
+  .card { background:var(--surface); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+  .card h3 { font-size:.98rem; font-weight:700; }
+
+  .picker { display:flex; gap:6px; flex-wrap:wrap; }
+  .picker button { border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:7px 12px; font-size:.82rem; font-weight:700; color:var(--muted); }
+  .picker button.on { background:rgba(63,207,168,.18); color:var(--accent); border-color:transparent; }
+
+  /* Förslagsram – samma idiom som övriga prototyper */
+  .prop { border:1px dashed rgba(242,184,75,.55); border-radius:18px; padding:14px 12px 12px; display:flex; flex-direction:column; gap:12px; position:relative; }
+  .prop.now { border-style:solid; border-color:var(--line); }
+  .prop .tag { position:absolute; top:-10px; left:12px; background:var(--warm); color:#2b1a00; font-size:.68rem; font-weight:800; padding:2px 9px; border-radius:999px; letter-spacing:.04em; }
+  .prop.now .tag { background:var(--line); color:var(--muted); }
+  .prop h2 { font-size:1.05rem; font-weight:800; }
+  .prop .why { font-size:.82rem; color:var(--warm); line-height:1.45; }
+  .prop.now .why { color:var(--muted); }
+
+  /* Skärmram som liknar passet */
+  .screen { background:#132226; border:1px solid var(--line); border-radius:16px; padding:14px 14px 16px; display:flex; flex-direction:column; gap:12px; min-height:270px; }
+  .tags { display:flex; gap:6px; align-items:center; }
+  .tag-s { font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--surface-2); color:var(--muted); }
+  .tag-s.type { background:rgba(63,207,168,.16); color:var(--accent); }
+  .stage { flex:1; display:flex; flex-direction:column; justify-content:center; gap:14px; text-align:center; }
+
+  /* Nuläget */
+  .q { font-size:1rem; color:var(--muted); }
+  .big { font-size:2.1rem; font-weight:800; letter-spacing:-.01em; line-height:1.15; }
+  .sub { font-size:1rem; color:var(--warm); font-weight:600; }
+  .gloss { font-size:.9rem; color:var(--muted); }
+
+  /* A: målform som etikett */
+  .goal { align-self:center; display:inline-flex; align-items:center; gap:7px; background:rgba(63,207,168,.16); color:var(--accent); border-radius:999px; padding:6px 14px; font-size:.78rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+  .word { font-size:2.3rem; font-weight:800; letter-spacing:-.01em; line-height:1.1; }
+  .meaning { font-size:1rem; color:var(--muted); }
+  .support { border-top:1px solid var(--line); padding-top:9px; font-size:.84rem; color:var(--muted); display:flex; justify-content:center; gap:8px; }
+  .support b { color:var(--text); font-weight:700; }
+  .support button { color:var(--accent); font-weight:700; font-size:.84rem; }
+
+  /* B: transformation */
+  .from { font-size:1.35rem; font-weight:700; color:var(--muted); }
+  .arrowrow { display:flex; align-items:center; justify-content:center; gap:10px; color:var(--accent); }
+  .arrowrow .ar { font-size:1.2rem; }
+  .arrowrow .lbl { font-size:.82rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+  .to { font-size:2.2rem; font-weight:800; }
+  .blankbox { display:inline-block; min-width:140px; border-bottom:3px solid var(--accent); height:1.6em; }
+
+  /* C: fältkort */
+  .fields { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; text-align:left; background:var(--surface-2); border-radius:12px; padding:12px; }
+  .fields .k { font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700; align-self:center; }
+  .fields .v { font-size:1.02rem; font-weight:700; }
+  .fields .v.goal-v { color:var(--accent); }
+  .fields .big-v { font-size:1.5rem; font-weight:800; }
+
+  .inp { width:100%; background:var(--surface); border:2px solid var(--line); border-radius:14px; padding:12px; font-size:1.3rem; font-weight:700; text-align:center; color:var(--muted); }
+  .cta { background:var(--accent); color:var(--accent-ink); border-radius:14px; padding:13px; font-weight:800; text-align:center; }
+  .tf { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tf button { border-radius:14px; padding:13px; font-weight:800; }
+  .tf .yes { background:rgba(91,191,114,.2); color:var(--good); }
+  .tf .no { background:rgba(224,96,79,.2); color:var(--fail); }
+  .selfg { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .selfg button { border-radius:14px; padding:13px; font-weight:800; background:var(--surface-2); }
+
+  ol.rec { padding-left:18px; display:flex; flex-direction:column; gap:8px; font-size:.9rem; }
+  ol.rec b { color:var(--accent); }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <span class="logo">G</span>
+    <h1>Hur uppgiften visas</h1>
+    <span class="chip">Skiss</span>
+  </div>
+
+  <div class="pad">
+
+    <div class="card">
+      <h3>Problemet</h3>
+      <p class="small muted">I dag konkurrerar tre saker om blicken: <i>vilken form</i> som efterfrågas, <i>vilket ord</i> det gäller, och <i>stödet</i> (betydelse, plural att utgå från). I Rätt eller fel? trycks allt ihop till en enda liten rad ovanför ordet, och då är det lätt att missa vad frågan faktiskt är.</p>
+      <p class="small muted">Nedan: nuläget först, sedan tre varianter. Byt övningstyp och ord så följer alla med.</p>
+      <div class="eyebrow" style="margin-top:4px">Övningstyp</div>
+      <div class="picker" id="type-pick"></div>
+      <div class="eyebrow" style="margin-top:4px">Exempel</div>
+      <div class="picker" id="ex-pick"></div>
+    </div>
+
+    <section class="prop now">
+      <span class="tag">NULÄGET</span>
+      <h2>Som appen ser ut i dag</h2>
+      <p class="why">Målformen står som en inledande fras ("Bestämd form plural av"), ordet är störst, och stödet ligger under i gult. I Rätt eller fel? blir allt en rad.</p>
+      <div class="screen" id="s-now"></div>
+    </section>
+
+    <section class="prop">
+      <span class="tag">VARIANT A</span>
+      <h2>Målformen som etikett</h2>
+      <p class="why">Den efterfrågade formen får en egen bricka överst, alltid på samma plats och i accentfärg. Ordet står ensamt i mitten. Stödet hamnar under en tunn linje, dämpat, och kan vikas in bakom "Visa stöd" så att skärmen är tom på allt utom uppgiften tills du vill ha hjälp.</p>
+      <div class="screen" id="s-a"></div>
+      <p class="tiny muted">Minsta ändringen mot i dag. Hierarkin blir: vad → vilket ord → stöd.</p>
+    </section>
+
+    <section class="prop">
+      <span class="tag">VARIANT B</span>
+      <h2>Som en förvandling</h2>
+      <p class="why">Uppgiften visas som det den är: från en form till en annan. Utgångsformen står överst, pilen bär etiketten, och svaret hör hemma under pilen. I Rätt eller fel? ser du både utgångspunkten och det föreslagna svaret, vilket är precis vad bedömningen kräver.</p>
+      <div class="screen" id="s-b"></div>
+      <p class="tiny muted">Tydligast för böjning, och gör regeln synlig varje gång. Tar mer höjd.</p>
+    </section>
+
+    <section class="prop">
+      <span class="tag">VARIANT C</span>
+      <h2>Fältkort</h2>
+      <p class="why">Allt får en egen rad med etikett: ord, betydelse, utgångsform och sökt form. Ingenting behöver tolkas, men det blir mer att läsa och mindre av känslan att man är mitt i en övning.</p>
+      <div class="screen" id="s-c"></div>
+      <p class="tiny muted">Mest explicit. Passar nog bäst som "visa allt"-läge för den som vill ha det.</p>
+    </section>
+
+    <div class="card">
+      <h3>Vad jag skulle välja</h3>
+      <ol class="rec">
+        <li><b>A som grund.</b> Bricka med målformen överst, ordet ensamt i mitten, stödet dämpat under en linje. Det löser det du beskriver utan att göra om övningen, och brickan hamnar på exakt samma plats i alla fyra övningstyper.</li>
+        <li><b>B för böjningsövningarna.</b> Pilen med etiketten gör regeln synlig varje gång, och i Rätt eller fel? är det en klar förbättring att se utgångsformen bredvid förslaget.</li>
+        <li><b>C bara som tillval</b> om du vill ha maximal tydlighet en period, till exempel när ett nytt mönster är färskt.</li>
+      </ol>
+      <p class="small muted">En sak till, oavsett variant: stödet ("plural: momente") är en ledtråd som i dag alltid syns. Att lägga den bakom ett tryck gör skärmen lugnare och övningen ärligare – och det är ett eget litet beslut.</p>
+    </div>
+
+    <p class="tiny muted" style="text-align:center">Skiss för Gnugga · riktiga former ur lexikonet · inget sparas</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* Exempel ur Gnuggas lexikon. from = formen man utgår från, goal = sökt form,
+   answer = facit, wrong = ett rimligt felsvar för Rätt eller fel. */
+const EX = [
+  { id: "pldef", area: "Bestämd plural", word: "moment", meaning: "ögonblick",
+    fromLabel: "plural", from: "momente", goal: "bestämd form plural",
+    answer: "momentele", wrong: "momenteul", sv: "ögonblicken" },
+  { id: "def", area: "Bestämd form", word: "mașină", meaning: "bil",
+    fromLabel: "obestämd, feminint", from: "o mașină", goal: "bestämd form",
+    answer: "mașina", wrong: "mașinaua", sv: "bilen" },
+  { id: "pres", area: "Presens", word: "a vorbi", meaning: "prata",
+    fromLabel: "infinitiv, -esc-gruppen", from: "a vorbi", goal: "presens för noi",
+    answer: "vorbim", wrong: "vorbiți", sv: "vi pratar" },
+];
+const TYPES = [["boj", "Böj"], ["rf", "Rätt eller fel?"], ["sag", "Säg det"]];
+let type = "boj", exi = 0, showSupport = false;
+
+function tags(ex, extra) {
+  return `<div class="tags"><span class="tag-s">${esc(ex.area)}</span><span class="tag-s type">${esc(extra)}</span></div>`;
+}
+
+/* ---------- Nuläget ---------- */
+function renderNow(ex) {
+  if (type === "boj") return tags(ex, "Böj") + `<div class="stage">
+      <div><div class="q">${esc(cap(ex.goal))} av</div>
+      <div class="big">${esc(ex.word)}</div>
+      <div class="sub">${esc(ex.fromLabel)}: ${esc(ex.from)} · ${esc(ex.meaning)}</div></div>
+      <div><div class="inp">skriv formen</div></div></div>`;
+  if (type === "rf") return tags(ex, "Rätt eller fel? · på tid") + `<div class="stage">
+      <div><div class="q">${esc(cap(ex.goal))} · ${esc(ex.word)} · ${esc(ex.fromLabel)}: ${esc(ex.from)}</div>
+      <div class="big">${esc(ex.wrong)}</div>
+      <div class="gloss">Stämmer det?</div></div>
+      <div class="tf"><button class="yes">✓ Rätt</button><button class="no">✕ Fel</button></div></div>`;
+  return tags(ex, "Säg det") + `<div class="stage">
+      <div><div class="q">Säg det högt på rumänska</div>
+      <div class="big">${esc(ex.sv)}</div>
+      <div class="sub">${esc(ex.word)} · ${esc(ex.meaning)}</div></div>
+      <div><div class="cta">Visa svaret</div></div></div>`;
+}
+
+/* ---------- A: målform som etikett ---------- */
+function renderA(ex) {
+  const support = showSupport
+    ? `<div class="support"><span>${esc(ex.fromLabel)}: <b>${esc(ex.from)}</b></span></div>`
+    : `<div class="support"><button id="a-show">Visa stöd</button></div>`;
+  const body = type === "rf"
+    ? `<div class="goal">${esc(ex.goal)}</div>
+       <div><div class="word">${esc(ex.wrong)}</div><div class="meaning">av ${esc(ex.word)} · ${esc(ex.meaning)}</div></div>
+       <div class="gloss">Stämmer det?</div>`
+    : type === "sag"
+      ? `<div class="goal">säg högt · ${esc(ex.goal)}</div>
+         <div><div class="word">${esc(ex.word)}</div><div class="meaning">${esc(ex.meaning)}</div></div>`
+      : `<div class="goal">${esc(ex.goal)}</div>
+         <div><div class="word">${esc(ex.word)}</div><div class="meaning">${esc(ex.meaning)}</div></div>`;
+  const action = type === "rf"
+    ? `<div class="tf"><button class="yes">✓ Rätt</button><button class="no">✕ Fel</button></div>`
+    : type === "sag" ? `<div class="cta">Visa svaret</div>` : `<div class="inp">skriv formen</div>`;
+  return tags(ex, TYPES.find((t) => t[0] === type)[1]) +
+    `<div class="stage">${body}${support}</div><div>${action}</div>`;
+}
+
+/* ---------- B: transformation ---------- */
+function renderB(ex) {
+  const head = `<div class="from">${esc(ex.from)}</div>
+    <div class="arrowrow"><span class="ar">↓</span><span class="lbl">${esc(ex.goal)}</span></div>`;
+  if (type === "rf") return tags(ex, "Rätt eller fel? · på tid") + `<div class="stage">
+      ${head}<div class="to">${esc(ex.wrong)}</div><div class="gloss">Stämmer det?</div></div>
+      <div class="tf"><button class="yes">✓ Rätt</button><button class="no">✕ Fel</button></div>`;
+  if (type === "sag") return tags(ex, "Säg det") + `<div class="stage">
+      ${head}<div class="to"><span class="blankbox"></span></div><div class="meaning">${esc(ex.sv)}</div></div>
+      <div class="cta">Visa svaret</div>`;
+  return tags(ex, "Böj") + `<div class="stage">
+      ${head}<div class="to"><span class="blankbox"></span></div>
+      <div class="meaning">${esc(ex.meaning)}</div></div>
+      <div><div class="inp">skriv formen</div></div>`;
+}
+
+/* ---------- C: fältkort ---------- */
+function renderC(ex) {
+  const rows = [
+    ["Ord", `<span class="v big-v">${esc(ex.word)}</span>`],
+    ["Betydelse", `<span class="v">${esc(ex.meaning)}</span>`],
+    ["Utgår från", `<span class="v">${esc(ex.from)} <span class="muted small">(${esc(ex.fromLabel)})</span></span>`],
+    ["Sökt form", `<span class="v goal-v">${esc(ex.goal)}</span>`],
+  ];
+  if (type === "rf") rows.push(["Förslag", `<span class="v big-v">${esc(ex.wrong)}</span>`]);
+  const action = type === "rf"
+    ? `<div class="tf"><button class="yes">✓ Rätt</button><button class="no">✕ Fel</button></div>`
+    : type === "sag" ? `<div class="cta">Visa svaret</div>` : `<div class="inp">skriv formen</div>`;
+  return tags(ex, TYPES.find((t) => t[0] === type)[1]) + `<div class="stage">
+      <div class="fields">${rows.map(([k, v]) => `<span class="k">${esc(k)}</span>${v}`).join("")}</div>
+      ${type === "rf" ? `<div class="gloss">Stämmer det?</div>` : ""}</div>
+      <div>${action}</div>`;
+}
+
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function render() {
+  const ex = EX[exi];
+  $("#type-pick").innerHTML = TYPES.map(([v, l]) => `<button data-t="${v}" class="${type === v ? "on" : ""}">${l}</button>`).join("");
+  $("#ex-pick").innerHTML = EX.map((e, i) => `<button data-i="${i}" class="${exi === i ? "on" : ""}">${esc(e.word)}</button>`).join("");
+  $("#s-now").innerHTML = renderNow(ex);
+  $("#s-a").innerHTML = renderA(ex);
+  $("#s-b").innerHTML = renderB(ex);
+  $("#s-c").innerHTML = renderC(ex);
+  $("#type-pick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { type = b.dataset.t; render(); }));
+  $("#ex-pick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { exi = +b.dataset.i; showSupport = false; render(); }));
+  const sh = $("#a-show"); if (sh) sh.addEventListener("click", () => { showSupport = true; render(); });
+}
+render();
+</script>
+</body>
+</html>

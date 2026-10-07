@@ -9,6 +9,9 @@
    Post: { date:"7 september 2026", ver:"v1", items:[ {t, type, hi, ico, desc} ] }
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt */
 const CHANGELOG = [
+  { date: "7 oktober 2026", ver: "v38", items: [
+    { t: "Adjektivövningen parar inte längre ihop ord som betyder samma sak, som \"döda dödar\".", type: "fixed" },
+  ] },
   { date: "18 september 2026", ver: "v37", items: [
     { t: "Knappen på substantivmönstren sa \"tre verb ur samma mönster\". Den säger ord nu.", type: "fixed" },
   ] },

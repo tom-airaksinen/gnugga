@@ -358,7 +358,11 @@ const RO = (() => {
       pool: (L) => L.adjs,
       key: (a) => a.ms,
       gen(a, L) {
-        const n = pick(NOUNS(L).slice(0, 250));
+        /* Undvik att adjektivet och substantivet betyder samma sak: "mort" + "moarte"
+           gav frasen "döda dödar". Prova några gånger, ge upp hellre än att låsa sig. */
+        const npool = NOUNS(L).slice(0, 250), asv = sv1(a);
+        let n = pick(npool);
+        for (let t = 0; t < 8 && (n.w === a.ms || sv1(n) === asv); t++) n = pick(npool);
         const num = Math.random() < .5 ? "sg" : "pl";
         const nounForm = num === "sg" ? n.w : n.f.pl;
         const ans = adjForm(a, n.g, num);

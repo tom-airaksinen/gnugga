@@ -45,3 +45,7 @@
 - [ ] Vilket av förslagen i `mockups/bojning.html` ska byggas först? (A hela tabellen, B kedjan, C säg hela verbet, D gruppass med tre verb ur samma mönster)
 - [ ] Ska ett paradigm räknas som sex övningar i dagsstatistiken eller som en? (Förslag: sex kort i lådsystemet, en rad i statistiken)
 - [ ] Ska gruppasset välja verben efter frekvens eller ska man peka ut dem själv?
+
+## Uppgiftens presentation (skiss 2026-10-07)
+- [ ] Vilken variant i `mockups/uppgift.html` ska byggas? (A målform som etikett, B förvandling med pil, C fältkort)
+- [ ] Ska stödet ("plural: momente") ligga bakom ett tryck i stället för att alltid synas? Lugnare skärm och ärligare övning, men ett extra tryck när man vill ha hjälp.

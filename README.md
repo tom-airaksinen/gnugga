@@ -99,6 +99,6 @@ skrivit över riktiga framsteg med sitt äldre dataformat.
 
 - `docs/` – plan, forskningsunderlag, datakällor, öppna frågor
 - `mockups/` – klickbara skisser: `gnugga-prototyp.html` (den första, ersatt av appen),
-  `statistik.html` (flikar & statistikförslag) och `bojning.html` (fyra förslag för att böja
+  `statistik.html` (flikar & statistikförslag), `uppgift.html` (tre sätt att visa själva uppgiften) och `bojning.html` (fyra förslag för att böja
   hela verbet, inkl. gruppass per verbgrupp)
 - `scripts/` – pipeline, ikon-SVG, rökprov
